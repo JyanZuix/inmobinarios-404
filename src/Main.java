@@ -116,6 +116,26 @@ public class Main {
         intentar(() -> c3.agregarPago(new Pago(1, LocalDate.of(2027, 3, 5), null, "2027-03", 0, "pendiente"))); // id repetido
         intentar(() -> sinCrear.agregarPago(new Pago(1, LocalDate.of(2026, 12, 5), null, "2026-12", 0, "pendiente")));
 
+        // ---------- RF-12: fechas de seguimiento ----------
+        titulo("RF-12: fechas de seguimiento");
+        Interesado sofia = new Interesado("Sofía Ruiz", "3125550000");
+        intentar(() -> {
+            // Se registran en desorden y con una fecha ya pasada, que no debe salir como pendiente.
+            sofia.registrarSeguimiento(hoy.minusDays(5));
+            sofia.registrarSeguimiento(hoy.plusDays(10));
+            sofia.registrarSeguimiento(hoy);
+            sofia.registrarSeguimiento(hoy.plusDays(2));
+            System.out.println("Citas pendientes de " + sofia.getNombre() + ":");
+            for (LocalDate cita : sofia.consultarSeguimientos(hoy)) {
+                System.out.println("  - " + cita);
+            }
+            // El mismo comportamiento lo hereda cualquier Cliente, porque vive en Persona.
+            luis.registrarSeguimiento(hoy.plusDays(7));
+            System.out.println("Citas pendientes de " + luis.getNombre() + ": " + luis.consultarSeguimientos(hoy));
+        });
+        intentar(() -> sofia.registrarSeguimiento(hoy.plusDays(2)));  // fecha repetida
+        intentar(() -> sofia.registrarSeguimiento(null));             // fecha nula
+
         // ---------- Persistencia (RNF-01) ----------
         titulo("Persistencia");
         intentar(() -> {
