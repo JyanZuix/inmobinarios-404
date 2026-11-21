@@ -97,6 +97,25 @@ public class Main {
         intentar(() -> c3.aplicarIncrementoAnual(hoy.minusDays(1)));  // fecha anterior al inicio
         intentar(() -> sinCrear.aplicarIncrementoAnual(hoy.plusYears(1).plusDays(1))); // contrato sin crear
 
+        // ---------- RF-08: historial de pagos ----------
+        titulo("RF-08: historial de pagos");
+        intentar(() -> {
+            // Se agregan en desorden; listarPagos() los devuelve ordenados por fecha de pago.
+            c3.agregarPago(new Pago(2, LocalDate.of(2027, 1, 5), LocalDate.of(2027, 1, 10), "2027-01",
+                    4_000_000, "pagado"));                                              // pagado con atraso
+            c3.agregarPago(new Pago(3, LocalDate.of(2027, 2, 5), null, "2027-02", 0, "pendiente"));
+            c3.agregarPago(new Pago(1, LocalDate.of(2026, 12, 5), LocalDate.of(2026, 12, 3), "2026-12",
+                    4_000_000, "pagado"));
+            for (Pago p : c3.listarPagos()) {
+                System.out.println("Pago " + p.getIdPago() + " | periodo " + p.getPeriodoCubierto()
+                        + " | límite " + p.getFechaLimite()
+                        + " | pagado " + (p.getFechaPago() == null ? "-" : p.getFechaPago())
+                        + " | " + p.getEstadoPago());
+            }
+        });
+        intentar(() -> c3.agregarPago(new Pago(1, LocalDate.of(2027, 3, 5), null, "2027-03", 0, "pendiente"))); // id repetido
+        intentar(() -> sinCrear.agregarPago(new Pago(1, LocalDate.of(2026, 12, 5), null, "2026-12", 0, "pendiente")));
+
         // ---------- Persistencia (RNF-01) ----------
         titulo("Persistencia");
         intentar(() -> {

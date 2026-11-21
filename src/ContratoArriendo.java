@@ -1,6 +1,7 @@
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -78,12 +79,41 @@ public class ContratoArriendo extends Contrato {
         return !siguienteAniversario.isAfter(fecha) && siguienteAniversario.isBefore(fechaFin);
     }
 
+    /**
+     * RF-08: historial de pagos ordenado por fecha de pago, incluidos los que tuvieron mora.
+     * Los pagos pendientes (sin fecha de pago) van al final, ordenados por su fecha límite.
+     * Devuelve una copia: ordenarla o modificarla no cambia los pagos del contrato.
+     */
     public List<Pago> listarPagos() {
-        throw new UnsupportedOperationException("Pendiente: RF-08");
+        List<Pago> ordenados = new ArrayList<>(pagos);
+        ordenados.sort(Comparator.comparing(Pago::getFechaPago, Comparator.nullsLast(Comparator.naturalOrder()))
+                .thenComparing(Pago::getFechaLimite));
+        return ordenados;
     }
 
+    /**
+     * Agrega un pago al contrato (mínimo de RF-05, necesario para RF-08).
+     * Pendiente de RF-05: registrarPago() y validarPeriodo().
+     */
     public void agregarPago(Pago pago) {
-        // Pendiente: RF-05
+        if (estado == null) {
+            throw new IllegalStateException("El contrato aún no ha sido creado: llame a crearContrato() antes de "
+                    + "agregar pagos.");
+        }
+        if (!ACTIVO.equals(estado)) {
+            throw new IllegalStateException("Solo se pueden agregar pagos a un contrato activo (estado actual: "
+                    + estado + ").");
+        }
+        if (pago == null) {
+            throw new IllegalArgumentException("No se puede agregar un pago nulo.");
+        }
+        for (Pago existente : pagos) {
+            if (existente.getIdPago() == pago.getIdPago()) {
+                throw new IllegalArgumentException("El contrato " + numeroContrato + " ya tiene un pago con el id "
+                        + pago.getIdPago() + ".");
+            }
+        }
+        pagos.add(pago);
     }
 
     // Monto provisional: canon por los meses completos del contrato (mínimo 1). Se afina con RF-07.
