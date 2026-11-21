@@ -1,44 +1,4 @@
 import java.util.ArrayList;
-<<<<<<< HEAD
-import java.util.List;
-
-public abstract class Propiedad implements Persistible {
-    private static int contadorPropiedades = 0;
-
-    protected String direccion;
-    protected double area;
-    protected double valorBase;
-    protected String tipo;
-    protected String modo;
-    protected String estado;
-    protected Propietario propietario;
-    protected Contrato contratoActual;
-    protected List<Contrato> historial = new ArrayList<>();
-    protected List<Interesado> interesados = new ArrayList<>();
-
-    public Propiedad(String direccion, double area, double valorBase, String tipo, String modo,
-                     Propietario propietario) {
-        this.direccion = direccion;
-        this.area = area;
-        this.valorBase = valorBase;
-        this.tipo = tipo;
-        this.modo = modo;
-        this.estado = "Disponible";
-        this.propietario = propietario;
-        contadorPropiedades++;
-    }
-
-    public boolean validarDatos() {
-        throw new UnsupportedOperationException("Pendiente: RF-01");
-    }
-
-    public void cambiarEstado(String nuevoEstado) {
-        // Pendiente: RF-10
-    }
-
-    public abstract double calcularDepositoGarantia();
-
-=======
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -71,7 +31,7 @@ public abstract class Propiedad implements Persistible {
     protected String tipo;
     protected String modo;
     protected String estado;
-    protected Propietario propietario;      // dueño del inmueble (se asigna desde Propietario.agregarPropiedad)
+    protected Propietario propietario;      // dueño del inmueble (lo recibe el constructor)
     protected Contrato contratoActual;      // contrato vigente (0..1)
     protected List<Interesado> interesados = new ArrayList<>(); // AQUÍ VA RF-11: registrar interesados
 
@@ -79,12 +39,17 @@ public abstract class Propiedad implements Persistible {
     private final List<Contrato> historial = new ArrayList<>();
 
     // ===================== Constructor =====================
-    public Propiedad(String direccion, double area, double valorBase, String tipo, String modo) {
+    // Solo guarda el propietario: el enlace inverso (Propietario.agregarPropiedad) lo hace GestorInmuebles
+    // cuando el registro es exitoso. Así no se pasa "this" desde el constructor y una propiedad rechazada
+    // (datos inválidos o dirección repetida) no queda en la lista del dueño.
+    public Propiedad(String direccion, double area, double valorBase, String tipo, String modo,
+                     Propietario propietario) {
         this.direccion = direccion == null ? null : direccion.trim();
         this.area = area;
         this.valorBase = valorBase;
         this.tipo = tipo == null ? null : tipo.trim();
         this.modo = normalizarModo(modo);
+        this.propietario = propietario;
         this.estado = DISPONIBLE; // toda propiedad nueva nace disponible
         validarDatos();           // si algo está mal, lanza una excepción y la propiedad no se crea
     }
@@ -112,6 +77,9 @@ public abstract class Propiedad implements Persistible {
             throw new IllegalArgumentException("El modo debe ser '" + MODO_ARRIENDO + "' o '" + MODO_VENTA
                     + "' (se recibió: " + modo + ").");
         }
+        if (propietario == null) {
+            throw new IllegalArgumentException("La propiedad '" + direccion + "' debe tener un propietario.");
+        }
         if (!esEstadoValido(estado)) {
             throw new IllegalArgumentException("Estado inválido: '" + estado + "'.");
         }
@@ -134,31 +102,17 @@ public abstract class Propiedad implements Persistible {
      */
     public abstract double calcularDepositoGarantia();
 
-    // AQUÍ VA RF-13 (listar disponibles por modalidad): vive en GestorInmuebles, no en la propiedad.
-
-    // ===================== Método estático =====================
->>>>>>> 1fba9540e0187e820ffd08e111b14c4c3f190c8f
-    public static int getTotalPropiedades() {
-        return contadorPropiedades;
-    }
-
-<<<<<<< HEAD
     public void agregarInteresado(Interesado interesado) {
         // Pendiente: RF-11
     }
 
-    public void asignarContrato(Contrato contrato) {
-        // Pendiente: RF-03
+    // AQUÍ VA RF-13 (listar disponibles por modalidad): vive en GestorInmuebles, no en la propiedad.
+
+    // ===================== Método estático =====================
+    public static int getTotalPropiedades() {
+        return contadorPropiedades;
     }
 
-    public void liberarContrato() {
-        // Pendiente: RF-10
-    }
-
-    @Override
-    public void guardar() {
-        // Pendiente: RNF-01
-=======
     // Default (sin public): solo lo llama GestorInmuebles cuando una propiedad se registra con éxito.
     static void contarRegistro() {
         contadorPropiedades++;
@@ -176,12 +130,14 @@ public abstract class Propiedad implements Persistible {
     }
 
     // Lo llama Contrato.crearContrato(): deja el contrato como vigente y lo suma al historial.
-    void registrarContrato(Contrato contrato) {
+    void asignarContrato(Contrato contrato) {
         this.contratoActual = contrato;
         this.historial.add(contrato);
     }
 
-    // AQUÍ VA RF-10: liberar la propiedad (contratoActual = null y estado disponible) al terminar un contrato.
+    void liberarContrato() {
+        // Pendiente: RF-10 (contratoActual = null y estado disponible al terminar un contrato)
+    }
 
     // ===================== Persistencia (RNF-01) =====================
 
@@ -195,58 +151,14 @@ public abstract class Propiedad implements Persistible {
                 tipo,
                 modo,
                 estado,
-                propietario == null ? "" : propietario.getDocumento(),         // solo se guarda la referencia
+                propietario.getDocumento(),                                    // solo se guarda la referencia
                 contratoActual == null ? "" : String.valueOf(contratoActual.getNumeroContrato())
         };
         ArchivoPlano.guardarRegistro(ARCHIVO, ArchivoPlano.concatenar(comunes, datosPropios()));
->>>>>>> 1fba9540e0187e820ffd08e111b14c4c3f190c8f
     }
 
     @Override
     public void cargar() {
-<<<<<<< HEAD
-        // Pendiente: RNF-01
-    }
-
-    public String getDireccion() {
-        return direccion;
-    }
-
-    public double getArea() {
-        return area;
-    }
-
-    public double getValorBase() {
-        return valorBase;
-    }
-
-    public String getTipo() {
-        return tipo;
-    }
-
-    public String getModo() {
-        return modo;
-    }
-
-    public String getEstado() {
-        return estado;
-    }
-
-    public Propietario getPropietario() {
-        return propietario;
-    }
-
-    public Contrato getContratoActual() {
-        return contratoActual;
-    }
-
-    public List<Contrato> getHistorial() {
-        return List.copyOf(historial);
-    }
-
-    public List<Interesado> getInteresados() {
-        return List.copyOf(interesados);
-=======
         String[] registro = ArchivoPlano.buscarRegistro(ARCHIVO, direccion);
         if (registro == null) {
             throw new IllegalStateException("No hay ninguna propiedad guardada con la dirección '" + direccion + "'.");
@@ -286,6 +198,7 @@ public abstract class Propiedad implements Persistible {
     public Propietario getPropietario() { return propietario; }
     public Contrato getContratoActual() { return contratoActual; }
     public List<Contrato> getHistorial() { return Collections.unmodifiableList(historial); }
+    public List<Interesado> getInteresados() { return Collections.unmodifiableList(interesados); }
 
     // ===================== Auxiliares privados =====================
 
@@ -307,6 +220,5 @@ public abstract class Propiedad implements Persistible {
             return MODO_VENTA;
         }
         return limpio;
->>>>>>> 1fba9540e0187e820ffd08e111b14c4c3f190c8f
     }
 }

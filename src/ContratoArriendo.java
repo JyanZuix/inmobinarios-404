@@ -1,19 +1,4 @@
 import java.time.LocalDate;
-<<<<<<< HEAD
-import java.util.ArrayList;
-import java.util.List;
-
-public class ContratoArriendo extends Contrato {
-    private double canonActual;
-    private double porcentajeIncremento;
-    private LocalDate ultimaFechaActualizacion;
-    private List<Pago> pagos = new ArrayList<>();
-
-    public ContratoArriendo(Propiedad propiedad, Cliente cliente, LocalDate fechaInicio, LocalDate fechaFin,
-                            double canonActual, double porcentajeIncremento) {
-        super(propiedad, cliente, fechaInicio, fechaFin);
-        this.canonActual = canonActual;
-=======
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,32 +13,32 @@ public class ContratoArriendo extends Contrato {
     private LocalDate ultimaFechaActualizacion;   // arranca en la fecha de inicio del contrato
 
     // Composición: los pagos pertenecen al contrato y no existen sin él.
-    private final List<Pago> pagos = new ArrayList<>(); // AQUÍ VA RF-05 (registrar pagos) y RF-08 (historial)
+    private final List<Pago> pagos = new ArrayList<>();
 
     public ContratoArriendo(Propiedad propiedad, Cliente cliente, LocalDate fechaInicio, LocalDate fechaFin,
                             double porcentajeIncremento) {
         super(propiedad, cliente, fechaInicio, fechaFin);
-        // El canon inicial es el valor base de la propiedad, así que la propiedad debe estar en modo Arriendo.
-        if (!Propiedad.MODO_ARRIENDO.equals(propiedad.getModo())) {
-            throw new IllegalArgumentException("No se puede crear un contrato de arriendo: la propiedad '"
-                    + propiedad.getDireccion() + "' está en modo " + propiedad.getModo() + ".");
-        }
-        if (!(porcentajeIncremento >= 0) || Double.isInfinite(porcentajeIncremento)) {
-            throw new IllegalArgumentException("El porcentaje de incremento no puede ser negativo (se recibió: "
-                    + porcentajeIncremento + ").");
-        }
+        validarModo(propiedad);
+        validarPorcentaje(porcentajeIncremento);
+        // El canon inicial es el valor base de la propiedad.
         this.canonActual = propiedad.getValorBase();
->>>>>>> 1fba9540e0187e820ffd08e111b14c4c3f190c8f
         this.porcentajeIncremento = porcentajeIncremento;
         this.ultimaFechaActualizacion = fechaInicio;
     }
 
-<<<<<<< HEAD
-    // Reconstruye un contrato ya existente (al cargarlo desde el archivo)
+    // Reconstruye un contrato ya existente (al cargarlo desde el archivo): el canon puede haber subido.
     public ContratoArriendo(int numeroContrato, Propiedad propiedad, Cliente cliente,
                             LocalDate fechaInicio, LocalDate fechaFin, String estado,
                             double canonActual, double porcentajeIncremento, LocalDate ultimaFechaActualizacion) {
         super(numeroContrato, propiedad, cliente, fechaInicio, fechaFin, estado);
+        validarModo(propiedad);
+        validarPorcentaje(porcentajeIncremento);
+        if (!(canonActual > 0) || Double.isInfinite(canonActual)) {
+            throw new IllegalArgumentException("El canon debe ser mayor a cero (se recibió: " + canonActual + ").");
+        }
+        if (ultimaFechaActualizacion == null || ultimaFechaActualizacion.isBefore(fechaInicio)) {
+            throw new IllegalArgumentException("La última fecha de actualización no puede ser anterior al inicio del contrato.");
+        }
         this.canonActual = canonActual;
         this.porcentajeIncremento = porcentajeIncremento;
         this.ultimaFechaActualizacion = ultimaFechaActualizacion;
@@ -74,24 +59,6 @@ public class ContratoArriendo extends Contrato {
     public void agregarPago(Pago pago) {
         // Pendiente: RF-05
     }
-
-    @Override
-    public double calcularMontoFinal() {
-        throw new UnsupportedOperationException("Pendiente: RF-03");
-    }
-
-    public double getCanonActual() {
-        return canonActual;
-    }
-
-    public double getPorcentajeIncremento() {
-        return porcentajeIncremento;
-    }
-
-    public LocalDate getUltimaFechaActualizacion() {
-        return ultimaFechaActualizacion;
-=======
-    // AQUÍ VAN RF-07 (aplicarIncrementoAnual, verificarAniversario) y RF-08 (listarPagos).
 
     // Monto provisional: canon por los meses completos del contrato (mínimo 1). Se afina con RF-07.
     @Override
@@ -124,6 +91,20 @@ public class ContratoArriendo extends Contrato {
         this.canonActual = Double.parseDouble(datos[0]);
         this.porcentajeIncremento = Double.parseDouble(datos[1]);
         this.ultimaFechaActualizacion = LocalDate.parse(datos[2]);
->>>>>>> 1fba9540e0187e820ffd08e111b14c4c3f190c8f
+    }
+
+    // El canon sale del valor base de la propiedad, así que la propiedad debe estar en modo Arriendo.
+    private static void validarModo(Propiedad propiedad) {
+        if (!Propiedad.MODO_ARRIENDO.equals(propiedad.getModo())) {
+            throw new IllegalArgumentException("No se puede crear un contrato de arriendo: la propiedad '"
+                    + propiedad.getDireccion() + "' está en modo " + propiedad.getModo() + ".");
+        }
+    }
+
+    private static void validarPorcentaje(double porcentajeIncremento) {
+        if (!(porcentajeIncremento >= 0) || Double.isInfinite(porcentajeIncremento)) {
+            throw new IllegalArgumentException("El porcentaje de incremento no puede ser negativo (se recibió: "
+                    + porcentajeIncremento + ").");
+        }
     }
 }

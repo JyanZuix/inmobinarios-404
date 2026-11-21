@@ -13,24 +13,27 @@ public class Main {
         // ---------- RF-01: registrar propiedades ----------
         titulo("RF-01: registrar propiedades");
         Propietario dueno = new Propietario("100200300", "Carlos Rojas", "3001234567");
-        Apartamento apto = new Apartamento("Calle 100 #15-20 Apto 301", 80, 2_500_000, "Arriendo", 3);
-        LocalComercial local = new LocalComercial("Carrera 7 #45-10 Local 2", 50, 4_000_000, "Arriendo");
-        Apartamento aptoVenta = new Apartamento("Calle 80 #30-12 Apto 502", 95, 350_000_000, "Venta", 3);
+        Apartamento apto = new Apartamento("Calle 100 #15-20 Apto 301", 80, 2_500_000, "Arriendo", dueno, 3);
+        LocalComercial local = new LocalComercial("Carrera 7 #45-10 Local 2", 50, 4_000_000, "Arriendo", dueno);
+        Apartamento aptoVenta = new Apartamento("Calle 80 #30-12 Apto 502", 95, 350_000_000, "Venta", dueno, 3);
 
         intentar(() -> {
+            // Al registrarlas, el gestor también las agrega a la lista de su propietario.
             gestorInmuebles.agregarPropiedad(apto);
             gestorInmuebles.agregarPropiedad(local);
             gestorInmuebles.agregarPropiedad(aptoVenta);
-            dueno.agregarPropiedad(apto);
-            dueno.agregarPropiedad(local);
             System.out.println("OK: propiedades registradas = " + Propiedad.getTotalPropiedades());
             System.out.println("Depósito apto  = " + apto.calcularDepositoGarantia());
             System.out.println("Depósito local = " + local.calcularDepositoGarantia() + " (2 x valor + IVA)");
         });
         intentar(() -> gestorInmuebles.agregarPropiedad(
-                new Apartamento("calle 100 #15-20 apto 301", 60, 1_800_000, "Arriendo", 2)));   // dirección repetida
-        intentar(() -> new Apartamento("Calle 1 #1-1", -5, 1_000_000, "Arriendo", 2));         // área inválida
-        intentar(() -> new LocalComercial("Calle 2 #2-2", 30, 1_000_000, "Alquiler"));         // modo inválido
+                new Apartamento("calle 100 #15-20 apto 301", 60, 1_800_000, "Arriendo", dueno, 2))); // dirección repetida
+        intentar(() -> new Apartamento("Calle 1 #1-1", -5, 1_000_000, "Arriendo", dueno, 2));       // área inválida
+        intentar(() -> new LocalComercial("Calle 2 #2-2", 30, 1_000_000, "Alquiler", dueno));       // modo inválido
+        intentar(() -> new LocalComercial("Calle 3 #3-3", 30, 1_000_000, "Arriendo", null));        // sin propietario
+        // Las propiedades rechazadas no quedan en la lista del propietario ni en el contador.
+        System.out.println("Propiedades de " + dueno.getNombre() + " = " + dueno.getPropiedades().size()
+                + "; total registradas = " + Propiedad.getTotalPropiedades());
 
         // ---------- RF-02: registrar arrendatarios ----------
         titulo("RF-02: registrar arrendatarios");

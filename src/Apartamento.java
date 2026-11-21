@@ -3,24 +3,12 @@
  * El tipo ("Apartamento") lo fija la propia clase, así nadie puede crear un apartamento con otro tipo.
  */
 public class Apartamento extends Propiedad {
-<<<<<<< HEAD
+
     private int numHabitaciones;
 
-    public Apartamento(String direccion, double area, double valorBase, String tipo, String modo,
+    public Apartamento(String direccion, double area, double valorBase, String modo,
                        Propietario propietario, int numHabitaciones) {
-        super(direccion, area, valorBase, tipo, modo, propietario);
-        this.numHabitaciones = numHabitaciones;
-    }
-
-    @Override
-    public double calcularDepositoGarantia() {
-        throw new UnsupportedOperationException("Pendiente: RF-14");
-=======
-
-    private int numHabitaciones;
-
-    public Apartamento(String direccion, double area, double valorBase, String modo, int numHabitaciones) {
-        super(direccion, area, valorBase, "Apartamento", modo);
+        super(direccion, area, valorBase, "Apartamento", modo, propietario);
         validarHabitaciones(numHabitaciones);
         this.numHabitaciones = numHabitaciones;
     }
@@ -29,14 +17,11 @@ public class Apartamento extends Propiedad {
     @Override
     public double calcularDepositoGarantia() {
         return valorBase;
->>>>>>> 1fba9540e0187e820ffd08e111b14c4c3f190c8f
     }
 
     public int getNumHabitaciones() {
         return numHabitaciones;
     }
-<<<<<<< HEAD
-=======
 
     // ---- Persistencia: campo propio de esta hija ----
     @Override
@@ -57,5 +42,4 @@ public class Apartamento extends Propiedad {
                     + habitaciones + ").");
         }
     }
->>>>>>> 1fba9540e0187e820ffd08e111b14c4c3f190c8f
 }

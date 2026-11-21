@@ -1,31 +1,4 @@
 import java.util.ArrayList;
-<<<<<<< HEAD
-import java.util.List;
-
-public class Propietario implements Persistible {
-    private String documento;
-    private String nombre;
-    private String contacto;
-    private List<Propiedad> propiedades = new ArrayList<>();
-
-    public Propietario(String documento, String nombre, String contacto) {
-        this.documento = documento;
-        this.nombre = nombre;
-        this.contacto = contacto;
-    }
-
-    public void actualizarContacto(String contacto) {
-        // Pendiente
-    }
-
-    public void agregarPropiedad(Propiedad propiedad) {
-        // Pendiente: RF-01
-    }
-
-    @Override
-    public void guardar() {
-        // Pendiente: RNF-01
-=======
 import java.util.Collections;
 import java.util.List;
 
@@ -57,7 +30,10 @@ public class Propietario implements Persistible {
         this.contacto = contacto.trim();
     }
 
-    /** Asigna una propiedad a este propietario (y a la propiedad le deja a este propietario como dueño). */
+    /**
+     * Agrega una propiedad a la lista de este propietario (enlace inverso de Propiedad.propietario).
+     * Normalmente lo llama GestorInmuebles.agregarPropiedad() al registrar la propiedad.
+     */
     public void agregarPropiedad(Propiedad propiedad) {
         if (propiedad == null) {
             throw new IllegalArgumentException("No se puede asignar una propiedad nula al propietario.");
@@ -86,31 +62,10 @@ public class Propietario implements Persistible {
     @Override
     public void guardar() {
         // AQUÍ VA la persistencia de Propietario (no hace parte de RF-01 a RF-03).
->>>>>>> 1fba9540e0187e820ffd08e111b14c4c3f190c8f
     }
 
     @Override
     public void cargar() {
-<<<<<<< HEAD
-        // Pendiente: RNF-01
-    }
-
-    public String getDocumento() {
-        return documento;
-    }
-
-    public String getNombre() {
-        return nombre;
-    }
-
-    public String getContacto() {
-        return contacto;
-    }
-
-    public List<Propiedad> getPropiedades() {
-        return List.copyOf(propiedades);
-=======
         // AQUÍ VA la lectura de Propietario desde archivo.
->>>>>>> 1fba9540e0187e820ffd08e111b14c4c3f190c8f
     }
 }

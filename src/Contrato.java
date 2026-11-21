@@ -1,26 +1,4 @@
 import java.time.LocalDate;
-<<<<<<< HEAD
-import java.util.List;
-
-public abstract class Contrato implements Persistible, Notificable {
-    private static int contadorContratos = 0;
-
-    protected int numeroContrato;
-    protected LocalDate fechaInicio;
-    protected LocalDate fechaFin;
-    protected String estado;
-    protected Propiedad propiedad;
-    protected Cliente cliente;
-
-    public Contrato(Propiedad propiedad, Cliente cliente, LocalDate fechaInicio, LocalDate fechaFin) {
-        this(generarNumeroContrato(), propiedad, cliente, fechaInicio, fechaFin, "Activo");
-    }
-
-    // Reconstruye un contrato ya existente (al cargarlo desde el archivo)
-    public Contrato(int numeroContrato, Propiedad propiedad, Cliente cliente,
-                    LocalDate fechaInicio, LocalDate fechaFin, String estado) {
-        this.numeroContrato = numeroContrato;
-=======
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -52,7 +30,7 @@ public abstract class Contrato implements Persistible, Notificable {
     protected Propiedad propiedad;
     protected Cliente cliente;
 
-    // ===================== Constructor =====================
+    // ===================== Constructores =====================
     protected Contrato(Propiedad propiedad, Cliente cliente, LocalDate fechaInicio, LocalDate fechaFin) {
         // RF-03: la propiedad y el cliente deben existir.
         if (propiedad == null) {
@@ -62,43 +40,27 @@ public abstract class Contrato implements Persistible, Notificable {
             throw new IllegalArgumentException("No se puede crear el contrato: el cliente no existe.");
         }
         validarFechas(fechaInicio, fechaFin);
->>>>>>> 1fba9540e0187e820ffd08e111b14c4c3f190c8f
         this.propiedad = propiedad;
         this.cliente = cliente;
         this.fechaInicio = fechaInicio;
         this.fechaFin = fechaFin;
-<<<<<<< HEAD
+    }
+
+    // Reconstruye un contrato ya creado (al cargarlo desde el archivo): conserva su número y su estado.
+    protected Contrato(int numeroContrato, Propiedad propiedad, Cliente cliente,
+                       LocalDate fechaInicio, LocalDate fechaFin, String estado) {
+        this(propiedad, cliente, fechaInicio, fechaFin);
+        if (numeroContrato < 1) {
+            throw new IllegalArgumentException("El número de contrato debe ser mayor a cero (se recibió: "
+                    + numeroContrato + ").");
+        }
+        if (!ACTIVO.equals(estado) && !FINALIZADO.equals(estado)) {
+            throw new IllegalArgumentException("Estado de contrato desconocido: '" + estado + "'.");
+        }
+        this.numeroContrato = numeroContrato;
         this.estado = estado;
+        // Los contratos nuevos seguirán la numeración después del mayor número cargado.
         contadorContratos = Math.max(contadorContratos, numeroContrato);
-    }
-
-    public boolean crearContrato() {
-        throw new UnsupportedOperationException("Pendiente: RF-03");
-    }
-
-    public boolean verificarDisponibilidad() {
-        throw new UnsupportedOperationException("Pendiente: RF-04");
-    }
-
-    public void terminarContrato() {
-        // Pendiente: RF-10
-    }
-
-    public abstract double calcularMontoFinal();
-
-    public static int generarNumeroContrato() {
-        return contadorContratos + 1;
-    }
-
-    @Override
-    public List<Notificacion> generarNotificaciones() {
-        throw new UnsupportedOperationException("Pendiente: RF-17");
-    }
-
-    @Override
-    public void guardar() {
-        // Pendiente: RNF-01
-=======
     }
 
     // ===================== Métodos de negocio =====================
@@ -128,13 +90,16 @@ public abstract class Contrato implements Persistible, Notificable {
         this.numeroContrato = generarNumeroContrato();
         this.estado = ACTIVO;
         propiedad.cambiarEstado(estadoPropiedadAlCrear()); // la propiedad deja de estar disponible
-        propiedad.registrarContrato(this);                 // contratoActual + historial de la propiedad
-        cliente.registrarContrato(this);                   // contratoActual + historial del cliente
+        propiedad.asignarContrato(this);                   // contratoActual + historial de la propiedad
+        cliente.asignarContrato(this);                     // contratoActual + historial del cliente
         return true;
     }
 
-    // AQUÍ VA RF-10: terminarContrato() (estado "finalizado" y liberar la propiedad).
-    // AQUÍ VA RF-04 completo: ya se bloquea con verificarDisponibilidad() dentro de crearContrato().
+    // RF-04 ya se bloquea con verificarDisponibilidad() dentro de crearContrato().
+
+    public void terminarContrato() {
+        // Pendiente: RF-10 (estado "finalizado" y liberar la propiedad y el cliente)
+    }
 
     /** Polimorfismo: cada tipo de contrato calcula su monto final a su manera. */
     public abstract double calcularMontoFinal();
@@ -172,38 +137,10 @@ public abstract class Contrato implements Persistible, Notificable {
         };
         // AQUÍ VA: cuando exista RF-05, ContratoArriendo.guardar() deberá delegar también en sus Pago.
         ArchivoPlano.guardarRegistro(ARCHIVO, ArchivoPlano.concatenar(comunes, datosPropios()));
->>>>>>> 1fba9540e0187e820ffd08e111b14c4c3f190c8f
     }
 
     @Override
     public void cargar() {
-<<<<<<< HEAD
-        // Pendiente: RNF-01
-    }
-
-    public int getNumeroContrato() {
-        return numeroContrato;
-    }
-
-    public LocalDate getFechaInicio() {
-        return fechaInicio;
-    }
-
-    public LocalDate getFechaFin() {
-        return fechaFin;
-    }
-
-    public String getEstado() {
-        return estado;
-    }
-
-    public Propiedad getPropiedad() {
-        return propiedad;
-    }
-
-    public Cliente getCliente() {
-        return cliente;
-=======
         if (estado == null) {
             throw new IllegalStateException("El contrato aún no ha sido creado, por eso no tiene un registro que cargar.");
         }
@@ -259,6 +196,5 @@ public abstract class Contrato implements Persistible, Notificable {
             throw new IllegalArgumentException("La fecha de fin (" + fin + ") debe ser posterior a la fecha de inicio ("
                     + inicio + ").");
         }
->>>>>>> 1fba9540e0187e820ffd08e111b14c4c3f190c8f
     }
 }
