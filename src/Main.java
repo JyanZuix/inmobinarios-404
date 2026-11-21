@@ -75,6 +75,28 @@ public class Main {
         intentar(sinCrear::guardar);
         intentar(() -> gestorContratos.agregarContrato(sinCrear));
 
+        // ---------- RF-07: incremento anual del canon ----------
+        titulo("RF-07: incremento anual del canon");
+        ContratoArriendo c3 = new ContratoArriendo(local, luis, hoy, hoy.plusYears(3), 0.05);
+        intentar(() -> {
+            c3.crearContrato();
+            gestorContratos.agregarContrato(c3);
+            System.out.println("Canon inicial = " + c3.getCanonActual());
+            c3.aplicarIncrementoAnual(hoy.plusMonths(11));           // aún no se cumple el año
+            System.out.println("A los 11 meses = " + c3.getCanonActual() + " (sin cambio)");
+            c3.aplicarIncrementoAnual(hoy.plusYears(1).plusDays(1)); // primer aniversario
+            System.out.println("Al año = " + c3.getCanonActual() + "; última actualización = "
+                    + c3.getUltimaFechaActualizacion());
+            c3.aplicarIncrementoAnual(hoy.plusYears(1).plusMonths(3)); // mismo año: no se vuelve a aplicar
+            System.out.println("Al año y 3 meses = " + c3.getCanonActual() + " (sin cambio)");
+            c3.aplicarIncrementoAnual(hoy.plusYears(2).plusMonths(1)); // segundo aniversario
+            System.out.println("A los 2 años = " + c3.getCanonActual());
+            c3.aplicarIncrementoAnual(hoy.plusYears(4));               // el aniversario 3 es el fin: no cuenta
+            System.out.println("Al terminar = " + c3.getCanonActual() + " (sin cambio)");
+        });
+        intentar(() -> c3.aplicarIncrementoAnual(hoy.minusDays(1)));  // fecha anterior al inicio
+        intentar(() -> sinCrear.aplicarIncrementoAnual(hoy.plusYears(1).plusDays(1))); // contrato sin crear
+
         // ---------- Persistencia (RNF-01) ----------
         titulo("Persistencia");
         intentar(() -> {

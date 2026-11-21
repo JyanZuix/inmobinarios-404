@@ -44,12 +44,38 @@ public class ContratoArriendo extends Contrato {
         this.ultimaFechaActualizacion = ultimaFechaActualizacion;
     }
 
-    public void aplicarIncrementoAnual() {
-        // Pendiente: RF-07
+    /**
+     * RF-07: aplica todos los incrementos anuales que se hayan cumplido hasta la fecha dada.
+     * Si pasó más de un año sin actualizar, aplica uno por cada aniversario (el incremento es compuesto).
+     * Cuando exista RF-05, registrar un pago llamará a este método con la fecha del pago, para que el canon
+     * siempre esté al día sin que el agente tenga que calcularlo.
+     */
+    public void aplicarIncrementoAnual(LocalDate fecha) {
+        if (estado == null) {
+            throw new IllegalStateException("El contrato aún no ha sido creado: llame a crearContrato() antes de "
+                    + "aplicar el incremento.");
+        }
+        if (!ACTIVO.equals(estado)) {
+            throw new IllegalStateException("Solo se puede aplicar el incremento a un contrato activo (estado actual: "
+                    + estado + ").");
+        }
+        if (fecha == null || fecha.isBefore(fechaInicio)) {
+            throw new IllegalArgumentException("La fecha (" + fecha + ") no puede ser anterior al inicio del contrato ("
+                    + fechaInicio + ").");
+        }
+        while (verificarAniversario(fecha)) {
+            canonActual = canonActual * (1 + porcentajeIncremento);
+            ultimaFechaActualizacion = ultimaFechaActualizacion.plusYears(1);
+        }
     }
 
-    public boolean verificarAniversario() {
-        throw new UnsupportedOperationException("Pendiente: RF-07");
+    /**
+     * RF-07: true si a la fecha dada ya se cumplieron 12 meses desde la última actualización del canon.
+     * Un aniversario que coincide con el fin del contrato no cuenta, porque el contrato ya termina.
+     */
+    public boolean verificarAniversario(LocalDate fecha) {
+        LocalDate siguienteAniversario = ultimaFechaActualizacion.plusYears(1);
+        return !siguienteAniversario.isAfter(fecha) && siguienteAniversario.isBefore(fechaFin);
     }
 
     public List<Pago> listarPagos() {
