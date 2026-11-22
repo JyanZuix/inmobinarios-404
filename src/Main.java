@@ -8,7 +8,8 @@ public class Main {
 
     public static void main(String[] args) {
         GestorInmuebles gestorInmuebles = new GestorInmuebles();
-        GestorContratos gestorContratos = new GestorContratos(gestorInmuebles);
+        GestorClientes gestorClientes = new GestorClientes();
+        GestorContratos gestorContratos = new GestorContratos(gestorInmuebles, gestorClientes);
 
         // ---------- RF-01: registrar propiedades ----------
         titulo("RF-01: registrar propiedades");
@@ -40,11 +41,18 @@ public class Main {
         // ---------- RF-02: registrar arrendatarios ----------
         titulo("RF-02: registrar arrendatarios");
         Arrendatario ana = new Arrendatario("52111222", "Ana Gómez", "ana@correo.com");
-        System.out.println("OK: " + ana.describir());
-        intentar(() -> new Arrendatario("52111222", "Otra Persona", "x@y.com"));  // documento repetido
-        intentar(() -> new Arrendatario("", "Sin documento", "x@y.com"));         // documento vacío
         Arrendatario luis = new Arrendatario("79333444", "Luis Pérez", "3109876543");
         Comprador marta = new Comprador("41555666", "Marta Díaz", "marta@correo.com", true);
+        intentar(() -> {
+            gestorClientes.agregarCliente(ana);
+            gestorClientes.agregarCliente(luis);
+            gestorClientes.agregarCliente(marta);
+            System.out.println("OK: " + ana.describir() + "; clientes registrados = "
+                    + gestorClientes.getClientes().size());
+        });
+        intentar(() -> gestorClientes.agregarCliente(
+                new Arrendatario(" 52111222 ", "Otra Persona", "x@y.com")));          // documento repetido
+        intentar(() -> new Arrendatario("", "Sin documento", "x@y.com"));         // documento vacío
 
         // ---------- RF-03: crear contratos ----------
         titulo("RF-03: crear contratos");
@@ -64,6 +72,10 @@ public class Main {
         Apartamento noRegistrado = new Apartamento("Calle 9 #9-9", 40, 900_000, "Arriendo", dueno, 1);
         intentar(() -> gestorContratos.agregarContrato(
                 new ContratoArriendo(noRegistrado, luis, hoy, hoy.plusYears(1), 0.05)));
+        // Cliente que existe como objeto pero no está registrado en GestorClientes
+        Arrendatario sinRegistrar = new Arrendatario("11111111", "Pedro Mora", "3150000000");
+        intentar(() -> gestorContratos.agregarContrato(
+                new ContratoArriendo(local, sinRegistrar, hoy, hoy.plusYears(1), 0.05)));
         // Liberar a mano una propiedad arrendada (saltarse RF-04) no está permitido
         intentar(() -> apto.cambiarEstado("disponible"));
         // Fechas incoherentes

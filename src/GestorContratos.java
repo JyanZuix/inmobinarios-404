@@ -9,17 +9,22 @@ import java.util.List;
 public class GestorContratos extends Gestor {
 
     private final GestorInmuebles inmuebles; // inventario contra el que se verifica que la propiedad exista
+    private final GestorClientes clientes;   // clientes contra los que se verifica que el cliente exista
     private final List<Contrato> contratos = new ArrayList<>();
 
-    public GestorContratos(GestorInmuebles inmuebles) {
+    public GestorContratos(GestorInmuebles inmuebles, GestorClientes clientes) {
         if (inmuebles == null) {
             throw new IllegalArgumentException("El gestor de contratos necesita el inventario de inmuebles.");
         }
+        if (clientes == null) {
+            throw new IllegalArgumentException("El gestor de contratos necesita el gestor de clientes.");
+        }
         this.inmuebles = inmuebles;
+        this.clientes = clientes;
     }
 
     /**
-     * RF-03: único punto para crear un contrato. Verifica que la propiedad esté registrada en el inventario,
+     * RF-03: único punto para crear un contrato. Verifica que la propiedad y el cliente estén registrados,
      * lo formaliza con crearContrato() y lo deja en la lista del gestor.
      */
     public void agregarContrato(Contrato contrato) {
@@ -32,6 +37,10 @@ public class GestorContratos extends Gestor {
         if (!inmuebles.getInmuebles().contains(contrato.getPropiedad())) {
             throw new IllegalArgumentException("No se puede crear el contrato: la propiedad '"
                     + contrato.getPropiedad().getDireccion() + "' no está registrada en el inventario.");
+        }
+        if (!clientes.getClientes().contains(contrato.getCliente())) {
+            throw new IllegalArgumentException("No se puede crear el contrato: el cliente "
+                    + contrato.getCliente().getNombre() + " no está registrado.");
         }
         contrato.crearContrato(); // lanza excepción si la propiedad no está disponible (RF-04)
         contratos.add(contrato);

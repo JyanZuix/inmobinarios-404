@@ -1,9 +1,7 @@
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * RF-02: Registrar un cliente (documento, nombre y contacto).
@@ -13,10 +11,6 @@ import java.util.Set;
 public abstract class Cliente extends Persona {
 
     private static final String ARCHIVO = "clientes.txt";
-
-    // Documentos ya registrados, por tipo de cliente. Como no hay un gestor de clientes en el UML,
-    // este conjunto estático es el que evita dos clientes del mismo tipo con el mismo documento.
-    private static final Set<String> registrados = new HashSet<>();
 
     // ===================== Atributos (protected: los heredan las hijas) =====================
     protected String documento;
@@ -31,14 +25,7 @@ public abstract class Cliente extends Persona {
             throw new IllegalArgumentException("El documento del cliente es obligatorio.");
         }
         this.documento = documento.trim();
-
-        // RF-02: no se permiten dos clientes del mismo tipo con el mismo documento.
-        // Se registra de último, para que un cliente inválido no deje su documento "ocupado".
-        if (!registrados.add(clave())) {
-            throw new IllegalArgumentException("Ya existe un " + getClass().getSimpleName()
-                    + " registrado con el documento " + this.documento
-                    + ". No se permiten dos con el mismo número de documento.");
-        }
+        // RF-02 (documento no repetido) lo verifica GestorClientes.agregarCliente(), que conoce a todos los clientes.
     }
 
     // ===================== Métodos de negocio =====================
@@ -126,7 +113,8 @@ public abstract class Cliente extends Persona {
     public List<Contrato> getHistorial() { return Collections.unmodifiableList(historial); }
 
     // Clave única: tipo de cliente + documento (un Arrendatario y un Comprador pueden tener el mismo documento).
-    private String clave() {
+    // Default (sin public): la usan la persistencia y GestorClientes.
+    String clave() {
         return getClass().getSimpleName() + ":" + documento;
     }
 }
