@@ -1,7 +1,9 @@
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Gestor del inventario de inmuebles del agente.
@@ -38,6 +40,16 @@ public class GestorInmuebles extends Gestor {
         throw new UnsupportedOperationException("Pendiente: RF-13");
     }
 
+    /** Devuelve la propiedad registrada con esa dirección (sin importar mayúsculas), o null si no existe. */
+    public Propiedad buscarPropiedad(String direccion) {
+        for (Propiedad propiedad : inmuebles) {
+            if (propiedad.getDireccion().equalsIgnoreCase(direccion)) {
+                return propiedad;
+            }
+        }
+        return null;
+    }
+
     public List<Propiedad> getInmuebles() {
         return Collections.unmodifiableList(inmuebles);
     }
@@ -58,9 +70,49 @@ public class GestorInmuebles extends Gestor {
         return elementos;
     }
 
+    /**
+     * RNF-01: recrea propietarios y propiedades desde los archivos. Se llama sobre un gestor vacío, al arrancar.
+     * Registro de propiedades.txt: dirección|área|valor|tipo|modo|estado|docPropietario|nContrato|datos propios...
+     */
     @Override
     public void cargarTodo() {
-        // Pendiente: RNF-01
+        if (!inmuebles.isEmpty()) {
+            throw new IllegalStateException("Solo se puede cargar el inventario en un gestor vacío.");
+        }
+        // 1. Propietarios, para poder enlazar cada propiedad con su dueño.
+        Map<String, Propietario> propietarios = new HashMap<>();
+        for (String[] r : ArchivoPlano.leerTodos("propietarios.txt")) {
+            propietarios.put(r[0], new Propietario(r[0], r[1], r[2]));
+        }
+        // 2. Propiedades. Pasan por agregarPropiedad(), así se valida la dirección y se enlaza el dueño.
+        for (String[] r : ArchivoPlano.leerTodos("propiedades.txt")) {
+            try {
+                Propiedad propiedad = crearPropiedad(r, propietarios.get(r[6]));
+                agregarPropiedad(propiedad);
+                propiedad.restaurarEstado(r[5]); // tal como quedó guardado (arrendada, en captación...)
+            } catch (RuntimeException e) {
+                throw new IllegalStateException("No se pudo cargar la propiedad '" + r[0] + "': " + e.getMessage(), e);
+            }
+        }
+        // El contrato actual (r[7]) lo reconecta GestorContratos al cargar los contratos.
+    }
+
+    // Fábrica: el único lugar del sistema que pregunta el tipo de propiedad, porque al leer un texto hay que
+    // decidir qué clase crear. Después de creada, el resto del sistema la usa de forma polimórfica.
+    private static Propiedad crearPropiedad(String[] r, Propietario dueno) {
+        String direccion = r[0];
+        double area = Double.parseDouble(r[1]);
+        double valorBase = Double.parseDouble(r[2]);
+        String tipo = r[3];
+        String modo = r[4];
+        switch (tipo) {
+            case "Apartamento":
+                return new Apartamento(direccion, area, valorBase, modo, dueno, Integer.parseInt(r[8]));
+            case "Local comercial":
+                return new LocalComercial(direccion, area, valorBase, modo, dueno);
+            default:
+                throw new IllegalArgumentException("tipo de propiedad desconocido '" + tipo + "'");
+        }
     }
 
     @Override

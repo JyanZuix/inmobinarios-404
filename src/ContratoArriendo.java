@@ -104,6 +104,19 @@ public class ContratoArriendo extends Contrato {
             throw new IllegalStateException("Solo se pueden agregar pagos a un contrato activo (estado actual: "
                     + estado + ").");
         }
+        incorporarPago(pago);
+    }
+
+    /**
+     * RNF-01: agrega un pago que ya existía, al recrear el sistema desde archivo. No exige contrato activo,
+     * porque un contrato finalizado también conserva sus pagos. Default: solo lo llama GestorContratos.
+     */
+    void cargarPago(Pago pago) {
+        incorporarPago(pago);
+    }
+
+    // Lo común a agregar y cargar: pago no nulo, id no repetido dentro del contrato, y enlazarlo.
+    private void incorporarPago(Pago pago) {
         if (pago == null) {
             throw new IllegalArgumentException("No se puede agregar un pago nulo.");
         }

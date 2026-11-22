@@ -150,6 +150,30 @@ public abstract class Propiedad implements Persistible {
         // Pendiente: RF-10 (contratoActual = null y estado disponible al terminar un contrato)
     }
 
+    // ---- Solo para recrear el sistema desde archivo (los llama la persistencia, nunca el agente) ----
+
+    // Lo llama GestorInmuebles.cargarTodo(): deja el estado tal como quedó guardado (RNF-01), incluso
+    // "arrendada" o "finalizado", que cambiarEstado() no permite poner a mano.
+    void restaurarEstado(String estadoGuardado) {
+        if (!esEstadoValido(estadoGuardado)) {
+            throw new IllegalArgumentException("Estado guardado inválido: '" + estadoGuardado + "'.");
+        }
+        this.estado = estadoGuardado;
+    }
+
+    // Lo llama Contrato.reconectar(): suma el contrato al historial y, si sigue vigente, lo deja como actual.
+    // No cambia el estado: ese ya se restauró desde el archivo de propiedades.
+    void reconectarContrato(Contrato contrato, boolean vigente) {
+        if (vigente) {
+            if (contratoActual != null) {
+                throw new IllegalStateException("Datos inconsistentes: la propiedad '" + direccion
+                        + "' tiene dos contratos vigentes guardados.");
+            }
+            this.contratoActual = contrato;
+        }
+        this.historial.add(contrato);
+    }
+
     // ===================== Persistencia (RNF-01) =====================
 
     @Override

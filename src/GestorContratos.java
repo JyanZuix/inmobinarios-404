@@ -1,7 +1,9 @@
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Gestor de contratos: agrupa todos los contratos del agente (RF-03).
@@ -69,9 +71,82 @@ public class GestorContratos extends Gestor {
         return new ArrayList<>(contratos);
     }
 
+    /**
+     * RNF-01: recrea los contratos y sus pagos. Necesita que inmuebles y clientes ya estén cargados
+     * (SistemaInmobiliario.cargarTodo() respeta ese orden). Se llama sobre un gestor vacío, al arrancar.
+     * Registro de contratos.txt: número|tipo|inicio|fin|estado|dirección|documento|datos propios...
+     */
     @Override
     public void cargarTodo() {
-        // Pendiente: RNF-01
+        if (!contratos.isEmpty()) {
+            throw new IllegalStateException("Solo se pueden cargar los contratos en un gestor vacío.");
+        }
+        // Los contratos de arriendo por número, para enlazarles sus pagos después.
+        Map<Integer, ContratoArriendo> arriendos = new HashMap<>();
+
+        for (String[] r : ArchivoPlano.leerTodos("contratos.txt")) {
+            try {
+                Contrato contrato;
+                switch (r[1]) {
+                    case "ContratoArriendo":
+                        ContratoArriendo arriendo = crearArriendo(r);
+                        arriendos.put(arriendo.getNumeroContrato(), arriendo);
+                        contrato = arriendo;
+                        break;
+                    case "ContratoVenta":
+                        contrato = crearVenta(r);
+                        break;
+                    default:
+                        throw new IllegalArgumentException("tipo de contrato desconocido '" + r[1] + "'");
+                }
+                contrato.reconectar(); // contratoActual e historial de la propiedad, historial del cliente
+                contratos.add(contrato);
+            } catch (RuntimeException e) {
+                throw new IllegalStateException("No se pudo cargar el contrato " + r[0] + ": " + e.getMessage(), e);
+            }
+        }
+
+        // Pagos: clave numeroContrato:idPago|fechaLímite|fechaPago (vacía si pendiente)|periodo|monto|estado
+        for (String[] r : ArchivoPlano.leerTodos("pagos.txt")) {
+            String[] clave = r[0].split(":");
+            ContratoArriendo arriendo = arriendos.get(Integer.parseInt(clave[0]));
+            if (arriendo == null) {
+                throw new IllegalStateException("El pago " + r[0] + " pertenece a un contrato de arriendo que no existe.");
+            }
+            LocalDate fechaPago = r[2].isEmpty() ? null : LocalDate.parse(r[2]);
+            arriendo.cargarPago(new Pago(Integer.parseInt(clave[1]), LocalDate.parse(r[1]), fechaPago, r[3],
+                    Double.parseDouble(r[4]), r[5]));
+        }
+    }
+
+    // ---- Fábricas: crean cada tipo de contrato con su constructor de reconstrucción ----
+
+    private ContratoArriendo crearArriendo(String[] r) {
+        Arrendatario arrendatario = clientes.buscarArrendatario(r[6]);
+        if (arrendatario == null) {
+            throw new IllegalArgumentException("no existe el arrendatario con documento " + r[6]);
+        }
+        return new ContratoArriendo(Integer.parseInt(r[0]), propiedadDe(r), arrendatario,
+                LocalDate.parse(r[2]), LocalDate.parse(r[3]), r[4],
+                Double.parseDouble(r[7]), Double.parseDouble(r[8]), LocalDate.parse(r[9]));
+    }
+
+    private ContratoVenta crearVenta(String[] r) {
+        Comprador comprador = clientes.buscarComprador(r[6]);
+        if (comprador == null) {
+            throw new IllegalArgumentException("no existe el comprador con documento " + r[6]);
+        }
+        return new ContratoVenta(Integer.parseInt(r[0]), propiedadDe(r), comprador,
+                LocalDate.parse(r[2]), LocalDate.parse(r[3]), r[4],
+                Double.parseDouble(r[7]), Double.parseDouble(r[8]), Double.parseDouble(r[9]));
+    }
+
+    private Propiedad propiedadDe(String[] r) {
+        Propiedad propiedad = inmuebles.buscarPropiedad(r[5]);
+        if (propiedad == null) {
+            throw new IllegalArgumentException("no existe la propiedad '" + r[5] + "'");
+        }
+        return propiedad;
     }
 
     @Override

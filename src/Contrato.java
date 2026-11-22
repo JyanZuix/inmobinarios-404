@@ -95,6 +95,16 @@ public abstract class Contrato implements Persistible, Notificable {
 
     // RF-04 ya se bloquea con verificarDisponibilidad() dentro de crearContrato().
 
+    /**
+     * RNF-01: vuelve a enlazar un contrato cargado desde archivo con su propiedad y su cliente.
+     * Es el equivalente de crearContrato() para un contrato que ya existía: no genera número ni valida
+     * disponibilidad, solo restaura las relaciones. Default: solo lo llama GestorContratos.cargarTodo().
+     */
+    void reconectar() {
+        propiedad.reconectarContrato(this, ACTIVO.equals(estado)); // contratoActual (si sigue activo) + historial
+        cliente.asignarContrato(this);                             // historial del cliente
+    }
+
     public void terminarContrato() {
         // Pendiente: RF-10 (estado "finalizado" y liberar la propiedad y el cliente)
     }

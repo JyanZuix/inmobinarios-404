@@ -63,14 +63,32 @@ final class ArchivoPlano {
             String claveEscapada = escapar(clave);
             for (String linea : Files.readAllLines(ruta, StandardCharsets.UTF_8)) {
                 if (claveDe(linea).equals(claveEscapada)) {
-                    String[] partes = linea.split("\\|", -1);
-                    for (int i = 0; i < partes.length; i++) {
-                        partes[i] = desescapar(partes[i]);
-                    }
-                    return partes;
+                    return separar(linea);
                 }
             }
             return null;
+        } catch (IOException e) {
+            throw new UncheckedIOException("No se pudo leer el archivo '" + archivo + "': " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Devuelve todos los registros del archivo, en el orden en que están (lista vacía si el archivo no existe).
+     * Lo usan los gestores para recrear el sistema al arrancar.
+     */
+    static List<String[]> leerTodos(String archivo) {
+        Path ruta = CARPETA.resolve(archivo);
+        List<String[]> registros = new ArrayList<>();
+        if (!Files.exists(ruta)) {
+            return registros;
+        }
+        try {
+            for (String linea : Files.readAllLines(ruta, StandardCharsets.UTF_8)) {
+                if (!linea.isBlank()) {
+                    registros.add(separar(linea));
+                }
+            }
+            return registros;
         } catch (IOException e) {
             throw new UncheckedIOException("No se pudo leer el archivo '" + archivo + "': " + e.getMessage(), e);
         }
@@ -91,6 +109,15 @@ final class ArchivoPlano {
             escapados[i] = escapar(campos[i]);
         }
         return String.join("|", escapados);
+    }
+
+    // Parte una línea en sus campos y deshace el escape de cada uno.
+    private static String[] separar(String linea) {
+        String[] partes = linea.split("\\|", -1);
+        for (int i = 0; i < partes.length; i++) {
+            partes[i] = desescapar(partes[i]);
+        }
+        return partes;
     }
 
     private static String claveDe(String linea) {

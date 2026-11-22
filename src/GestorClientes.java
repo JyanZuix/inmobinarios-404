@@ -61,9 +61,53 @@ public class GestorClientes extends Gestor {
         return new ArrayList<>(clientes);
     }
 
+    /**
+     * RNF-01: recrea los clientes y sus fechas de seguimiento. Se llama sobre un gestor vacío, al arrancar.
+     * Registro de clientes.txt: Tipo:documento|documento|nombre|contacto|datos propios...
+     */
     @Override
     public void cargarTodo() {
-        // Pendiente: RNF-01
+        if (!clientes.isEmpty()) {
+            throw new IllegalStateException("Solo se pueden cargar los clientes en un gestor vacío.");
+        }
+        for (String[] r : ArchivoPlano.leerTodos("clientes.txt")) {
+            try {
+                agregarCliente(crearCliente(r)); // valida el documento repetido, igual que un registro normal
+            } catch (RuntimeException e) {
+                throw new IllegalStateException("No se pudo cargar el cliente '" + r[0] + "': " + e.getMessage(), e);
+            }
+        }
+        // Seguimientos: clave|fecha1|fecha2... Las líneas de otras personas (p. ej. interesados) se ignoran aquí.
+        for (String[] r : ArchivoPlano.leerTodos("seguimientos.txt")) {
+            Cliente cliente = buscarPorClave(r[0]);
+            if (cliente != null) {
+                for (int i = 1; i < r.length; i++) {
+                    cliente.registrarSeguimiento(LocalDate.parse(r[i]));
+                }
+            }
+        }
+    }
+
+    // Fábrica: el tipo de cliente va al inicio de la clave ("Arrendatario:52111222").
+    private static Cliente crearCliente(String[] r) {
+        String tipo = r[0].substring(0, r[0].indexOf(':'));
+        switch (tipo) {
+            case "Arrendatario":
+                return new Arrendatario(r[1], r[2], r[3]);
+            case "Comprador":
+                return new Comprador(r[1], r[2], r[3], Boolean.parseBoolean(r[4]));
+            default:
+                throw new IllegalArgumentException("tipo de cliente desconocido '" + tipo + "'");
+        }
+    }
+
+    private Cliente buscarPorClave(String clave) {
+        for (Cliente cliente : clientes) {
+            if (cliente.clave().equals(clave)) {
+                return cliente;
+            }
+        }
+        return null;
     }
 
     @Override
