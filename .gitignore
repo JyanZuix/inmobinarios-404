@@ -28,5 +28,6 @@ bin/
 
 ### Mac OS ###
 .DS_Store
-### Datos generados por el programa (persistencia) ###
+
+### Datos de persistencia (propios de cada gestor, NO subir al repositorio) ###
 datos/
