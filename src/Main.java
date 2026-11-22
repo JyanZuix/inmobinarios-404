@@ -8,7 +8,7 @@ public class Main {
 
     public static void main(String[] args) {
         GestorInmuebles gestorInmuebles = new GestorInmuebles();
-        GestorContratos gestorContratos = new GestorContratos();
+        GestorContratos gestorContratos = new GestorContratos(gestorInmuebles);
 
         // ---------- RF-01: registrar propiedades ----------
         titulo("RF-01: registrar propiedades");
@@ -16,18 +16,20 @@ public class Main {
         Apartamento apto = new Apartamento("Calle 100 #15-20 Apto 301", 80, 2_500_000, "Arriendo", dueno, 3);
         LocalComercial local = new LocalComercial("Carrera 7 #45-10 Local 2", 50, 4_000_000, "Arriendo", dueno);
         Apartamento aptoVenta = new Apartamento("Calle 80 #30-12 Apto 502", 95, 350_000_000, "Venta", dueno, 3);
+        Apartamento apto2 = new Apartamento("Calle 45 #10-05 Apto 101", 60, 1_900_000, "Arriendo", dueno, 2);
 
         intentar(() -> {
             // Al registrarlas, el gestor también las agrega a la lista de su propietario.
             gestorInmuebles.agregarPropiedad(apto);
             gestorInmuebles.agregarPropiedad(local);
             gestorInmuebles.agregarPropiedad(aptoVenta);
+            gestorInmuebles.agregarPropiedad(apto2);
             System.out.println("OK: propiedades registradas = " + Propiedad.getTotalPropiedades());
             System.out.println("Depósito apto  = " + apto.calcularDepositoGarantia());
             System.out.println("Depósito local = " + local.calcularDepositoGarantia() + " (2 x valor + IVA)");
         });
         intentar(() -> gestorInmuebles.agregarPropiedad(
-                new Apartamento("calle 100 #15-20 apto 301", 60, 1_800_000, "Arriendo", dueno, 2))); // dirección repetida
+                new Apartamento("calle 100  #15-20 apto 301", 60, 1_800_000, "Arriendo", dueno, 2))); // dirección repetida
         intentar(() -> new Apartamento("Calle 1 #1-1", -5, 1_000_000, "Arriendo", dueno, 2));       // área inválida
         intentar(() -> new LocalComercial("Calle 2 #2-2", 30, 1_000_000, "Alquiler", dueno));       // modo inválido
         intentar(() -> new LocalComercial("Calle 3 #3-3", 30, 1_000_000, "Arriendo", null));        // sin propietario
@@ -47,39 +49,48 @@ public class Main {
         // ---------- RF-03: crear contratos ----------
         titulo("RF-03: crear contratos");
         LocalDate hoy = LocalDate.of(2026, 11, 21);
+        // El gestor es el único punto para crear contratos: verifica que la propiedad esté en el inventario,
+        // lo formaliza y lo guarda. Los constructores piden Arrendatario (arriendo) o Comprador (venta), así
+        // que un contrato de arriendo con un comprador ni siquiera compila.
         ContratoArriendo c1 = new ContratoArriendo(apto, ana, hoy, hoy.plusYears(1), 0.05);
         intentar(() -> {
-            c1.crearContrato();
             gestorContratos.agregarContrato(c1);
             System.out.println("OK: contrato " + c1.getNumeroContrato() + " creado; propiedad ahora '"
                     + apto.getEstado() + "'; monto final = " + c1.calcularMontoFinal());
         });
-        // Propiedad ya arrendada
-        intentar(() -> new ContratoArriendo(apto, luis, hoy, hoy.plusYears(1), 0.05).crearContrato());
-        // Cliente con contrato vigente
-        intentar(() -> new ContratoArriendo(local, ana, hoy, hoy.plusYears(1), 0.05).crearContrato());
+        // Propiedad ya arrendada (RF-04)
+        intentar(() -> gestorContratos.agregarContrato(new ContratoArriendo(apto, luis, hoy, hoy.plusYears(1), 0.05)));
+        // Propiedad que existe como objeto pero no está registrada en el inventario
+        Apartamento noRegistrado = new Apartamento("Calle 9 #9-9", 40, 900_000, "Arriendo", dueno, 1);
+        intentar(() -> gestorContratos.agregarContrato(
+                new ContratoArriendo(noRegistrado, luis, hoy, hoy.plusYears(1), 0.05)));
+        // Liberar a mano una propiedad arrendada (saltarse RF-04) no está permitido
+        intentar(() -> apto.cambiarEstado("disponible"));
         // Fechas incoherentes
         intentar(() -> new ContratoArriendo(local, luis, hoy, hoy.minusDays(3), 0.05));
         // Modo incorrecto
         intentar(() -> new ContratoArriendo(aptoVenta, luis, hoy, hoy.plusYears(1), 0.05));
+        // Un cliente puede firmar varios contratos: Ana arrienda también apto2
+        intentar(() -> {
+            gestorContratos.agregarContrato(new ContratoArriendo(apto2, ana, hoy, hoy.plusYears(1), 0.05));
+            System.out.println("OK: " + ana.getNombre() + " tiene " + ana.getContratosVigentes().size()
+                    + " contratos vigentes.");
+        });
         // Venta correcta
         ContratoVenta cv = new ContratoVenta(aptoVenta, marta, hoy, hoy.plusMonths(2), 70_000_000);
         intentar(() -> {
-            cv.crearContrato();
             gestorContratos.agregarContrato(cv);
             System.out.println("OK: contrato " + cv.getNumeroContrato() + " (venta); propiedad ahora '"
                     + aptoVenta.getEstado() + "'; saldo financiado = " + cv.getSaldoFinanciado());
         });
-        // Contrato sin crear no se puede guardar ni agregar
+        // Un contrato que no se ha registrado en el gestor no se puede guardar
         ContratoArriendo sinCrear = new ContratoArriendo(local, luis, hoy, hoy.plusYears(1), 0.03);
         intentar(sinCrear::guardar);
-        intentar(() -> gestorContratos.agregarContrato(sinCrear));
 
         // ---------- RF-07: incremento anual del canon ----------
         titulo("RF-07: incremento anual del canon");
         ContratoArriendo c3 = new ContratoArriendo(local, luis, hoy, hoy.plusYears(3), 0.05);
         intentar(() -> {
-            c3.crearContrato();
             gestorContratos.agregarContrato(c3);
             System.out.println("Canon inicial = " + c3.getCanonActual());
             c3.aplicarIncrementoAnual(hoy.plusMonths(11));           // aún no se cumple el año

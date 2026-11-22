@@ -16,7 +16,7 @@ public class ContratoArriendo extends Contrato {
     // Composición: los pagos pertenecen al contrato y no existen sin él.
     private final List<Pago> pagos = new ArrayList<>();
 
-    public ContratoArriendo(Propiedad propiedad, Cliente cliente, LocalDate fechaInicio, LocalDate fechaFin,
+    public ContratoArriendo(Propiedad propiedad, Arrendatario cliente, LocalDate fechaInicio, LocalDate fechaFin,
                             double porcentajeIncremento) {
         super(propiedad, cliente, fechaInicio, fechaFin);
         validarModo(propiedad);
@@ -28,7 +28,7 @@ public class ContratoArriendo extends Contrato {
     }
 
     // Reconstruye un contrato ya existente (al cargarlo desde el archivo): el canon puede haber subido.
-    public ContratoArriendo(int numeroContrato, Propiedad propiedad, Cliente cliente,
+    public ContratoArriendo(int numeroContrato, Propiedad propiedad, Arrendatario cliente,
                             LocalDate fechaInicio, LocalDate fechaFin, String estado,
                             double canonActual, double porcentajeIncremento, LocalDate ultimaFechaActualizacion) {
         super(numeroContrato, propiedad, cliente, fechaInicio, fechaFin, estado);
@@ -53,7 +53,7 @@ public class ContratoArriendo extends Contrato {
      */
     public void aplicarIncrementoAnual(LocalDate fecha) {
         if (estado == null) {
-            throw new IllegalStateException("El contrato aún no ha sido creado: llame a crearContrato() antes de "
+            throw new IllegalStateException("El contrato aún no ha sido creado: regístrelo con GestorContratos.agregarContrato() antes de "
                     + "aplicar el incremento.");
         }
         if (!ACTIVO.equals(estado)) {
@@ -97,7 +97,7 @@ public class ContratoArriendo extends Contrato {
      */
     public void agregarPago(Pago pago) {
         if (estado == null) {
-            throw new IllegalStateException("El contrato aún no ha sido creado: llame a crearContrato() antes de "
+            throw new IllegalStateException("El contrato aún no ha sido creado: regístrelo con GestorContratos.agregarContrato() antes de "
                     + "agregar pagos.");
         }
         if (!ACTIVO.equals(estado)) {

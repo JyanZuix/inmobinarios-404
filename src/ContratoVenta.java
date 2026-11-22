@@ -10,7 +10,7 @@ public class ContratoVenta extends Contrato {
     private double cuotaInicial;
     private double saldoFinanciado;
 
-    public ContratoVenta(Propiedad propiedad, Cliente cliente, LocalDate fechaInicio, LocalDate fechaFin,
+    public ContratoVenta(Propiedad propiedad, Comprador cliente, LocalDate fechaInicio, LocalDate fechaFin,
                          double cuotaInicial) {
         super(propiedad, cliente, fechaInicio, fechaFin);
         validarModo(propiedad);
@@ -23,7 +23,7 @@ public class ContratoVenta extends Contrato {
     }
 
     // Reconstruye un contrato ya existente (al cargarlo desde el archivo)
-    public ContratoVenta(int numeroContrato, Propiedad propiedad, Cliente cliente,
+    public ContratoVenta(int numeroContrato, Propiedad propiedad, Comprador cliente,
                          LocalDate fechaInicio, LocalDate fechaFin, String estado,
                          double valorVenta, double cuotaInicial, double saldoFinanciado) {
         super(numeroContrato, propiedad, cliente, fechaInicio, fechaFin, estado);

@@ -8,7 +8,8 @@ import java.util.List;
  * Clase abstracta: ContratoArriendo y ContratoVenta comparten fechas y estado, pero calculan distinto.
  *
  * Crear un contrato tiene dos pasos: primero se construye el objeto (se validan sus datos) y luego
- * crearContrato() lo formaliza (verifica la disponibilidad, le asigna número y deja la propiedad ocupada).
+ * GestorContratos.agregarContrato() lo formaliza con crearContrato() (verifica la disponibilidad, le asigna
+ * número y deja la propiedad ocupada) y lo guarda en su lista.
  */
 public abstract class Contrato implements Persistible, Notificable {
 
@@ -73,8 +74,10 @@ public abstract class Contrato implements Persistible, Notificable {
     /**
      * RF-03: formaliza el contrato. Devuelve true si se creó; si no se puede crear, LANZA una excepción
      * que explica el motivo (así quien opera el sistema sabe qué corregir).
+     * Default (sin public): solo lo llama GestorContratos.agregarContrato(), que antes verifica que la
+     * propiedad esté en el inventario y después guarda el contrato en su lista.
      */
-    public boolean crearContrato() {
+    boolean crearContrato() {
         if (estado != null) {
             throw new IllegalStateException("El contrato " + numeroContrato + " ya fue creado.");
         }
@@ -82,16 +85,11 @@ public abstract class Contrato implements Persistible, Notificable {
             throw new IllegalStateException("No se puede crear el contrato: la propiedad '" + propiedad.getDireccion()
                     + "' no está disponible (estado actual: " + propiedad.getEstado() + ").");
         }
-        if (cliente.getContratoActual() != null) {
-            throw new IllegalStateException("No se puede crear el contrato: " + cliente.getNombre()
-                    + " ya tiene un contrato vigente (N° " + cliente.getContratoActual().getNumeroContrato() + ").");
-        }
 
         this.numeroContrato = generarNumeroContrato();
         this.estado = ACTIVO;
-        propiedad.cambiarEstado(estadoPropiedadAlCrear()); // la propiedad deja de estar disponible
-        propiedad.asignarContrato(this);                   // contratoActual + historial de la propiedad
-        cliente.asignarContrato(this);                     // contratoActual + historial del cliente
+        propiedad.asignarContrato(this, estadoPropiedadAlCrear()); // ocupa la propiedad: contratoActual + estado
+        cliente.asignarContrato(this);                             // historial del cliente (puede tener varios)
         return true;
     }
 
@@ -125,7 +123,7 @@ public abstract class Contrato implements Persistible, Notificable {
     @Override
     public void guardar() {
         if (estado == null) {
-            throw new IllegalStateException("El contrato aún no ha sido creado: llame a crearContrato() antes de guardarlo.");
+            throw new IllegalStateException("El contrato aún no ha sido creado: regístrelo con GestorContratos.agregarContrato() antes de guardarlo.");
         }
         String[] comunes = {
                 String.valueOf(numeroContrato),     // clave del registro

@@ -20,9 +20,8 @@ public abstract class Cliente extends Persona {
 
     // ===================== Atributos (protected: los heredan las hijas) =====================
     protected String documento;
-    protected Contrato contratoActual; // contrato vigente (0..1)
 
-    // Historial de todos los contratos del cliente (0..*)
+    // Historial de todos los contratos del cliente (0..*). Un cliente puede tener varios vigentes a la vez.
     private final List<Contrato> historial = new ArrayList<>();
 
     // ===================== Constructor =====================
@@ -51,14 +50,23 @@ public abstract class Cliente extends Persona {
     /** Polimorfismo: cada tipo de cliente se describe a su manera. */
     public abstract String describir();
 
-    // Lo llama Contrato.crearContrato(): deja el contrato como vigente y lo suma al historial.
+    // Lo llama Contrato.crearContrato(): suma el contrato al historial del cliente.
     void asignarContrato(Contrato contrato) {
-        this.contratoActual = contrato;
         this.historial.add(contrato);
     }
 
-    void liberarContrato() {
-        // Pendiente: RF-10 (dejar contratoActual vacío cuando el contrato termina)
+    /**
+     * Contratos del cliente que siguen activos. Se calcula desde el historial (no se guarda aparte),
+     * así que al terminar un contrato (RF-10) no hay nada que sincronizar en el cliente.
+     */
+    public List<Contrato> getContratosVigentes() {
+        List<Contrato> vigentes = new ArrayList<>();
+        for (Contrato contrato : historial) {
+            if (Contrato.ACTIVO.equals(contrato.getEstado())) {
+                vigentes.add(contrato);
+            }
+        }
+        return vigentes;
     }
 
     // ===================== Notificable =====================
@@ -76,8 +84,8 @@ public abstract class Cliente extends Persona {
                 clave(),                                                       // clave del registro: Tipo:documento
                 documento,
                 nombre,
-                contacto,
-                contratoActual == null ? "" : String.valueOf(contratoActual.getNumeroContrato())
+                contacto
+                // El historial no se guarda aquí: se reconstruye desde los contratos, que guardan el documento.
         };
         ArchivoPlano.guardarRegistro(ARCHIVO, ArchivoPlano.concatenar(comunes, datosPropios()));
     }
@@ -97,9 +105,7 @@ public abstract class Cliente extends Persona {
             }
             this.nombre = nombreGuardado;
             this.contacto = contactoGuardado;
-            // registro[4] (número del contrato actual) es una referencia: se reconecta cuando los gestores
-            // carguen todo el sistema (mejora futura).
-            aplicarDatosPropios(Arrays.copyOfRange(registro, 5, registro.length));
+            aplicarDatosPropios(Arrays.copyOfRange(registro, 4, registro.length));
         } catch (RuntimeException e) {
             throw new IllegalStateException("El registro guardado del cliente " + documento
                     + " está dañado: " + e.getMessage(), e);
@@ -117,7 +123,6 @@ public abstract class Cliente extends Persona {
 
     // ===================== Getters =====================
     public String getDocumento() { return documento; }
-    public Contrato getContratoActual() { return contratoActual; }
     public List<Contrato> getHistorial() { return Collections.unmodifiableList(historial); }
 
     // Clave única: tipo de cliente + documento (un Arrendatario y un Comprador pueden tener el mismo documento).

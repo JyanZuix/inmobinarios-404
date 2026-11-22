@@ -44,7 +44,8 @@ public abstract class Propiedad implements Persistible {
     // (datos inválidos o dirección repetida) no queda en la lista del dueño.
     public Propiedad(String direccion, double area, double valorBase, String tipo, String modo,
                      Propietario propietario) {
-        this.direccion = direccion == null ? null : direccion.trim();
+        // Se quitan espacios sobrantes (también los internos) para que "Calle 1  #2" y "Calle 1 #2" sean la misma.
+        this.direccion = direccion == null ? null : direccion.trim().replaceAll("\\s+", " ");
         this.area = area;
         this.valorBase = valorBase;
         this.tipo = tipo == null ? null : tipo.trim();
@@ -86,12 +87,20 @@ public abstract class Propiedad implements Persistible {
         return true;
     }
 
-    /** Cambia el estado de la propiedad (disponible, arrendada, en captación o finalizado). */
+    /**
+     * Cambio manual de estado que hace el agente: solo entre "disponible" y "en captación".
+     * "Arrendada" y "finalizado" los pone un contrato al crearse, y una propiedad con contrato vigente
+     * solo se libera al terminar ese contrato (RF-10). Así nadie puede saltarse RF-04 cambiando el estado.
+     */
     public void cambiarEstado(String nuevoEstado) {
+        if (contratoActual != null) {
+            throw new IllegalStateException("La propiedad '" + direccion + "' tiene un contrato vigente (N° "
+                    + contratoActual.getNumeroContrato() + "); se libera al terminar el contrato.");
+        }
         String normalizado = nuevoEstado == null ? null : nuevoEstado.trim().toLowerCase();
-        if (!esEstadoValido(normalizado)) {
-            throw new IllegalArgumentException("Estado inválido: '" + nuevoEstado + "'. Los estados permitidos son: "
-                    + DISPONIBLE + ", " + ARRENDADA + ", " + EN_CAPTACION + " y " + FINALIZADO + ".");
+        if (!DISPONIBLE.equals(normalizado) && !EN_CAPTACION.equals(normalizado)) {
+            throw new IllegalArgumentException("Estado inválido: '" + nuevoEstado + "'. Manualmente solo se puede "
+                    + "pasar a '" + DISPONIBLE + "' o '" + EN_CAPTACION + "'.");
         }
         this.estado = normalizado;
     }
@@ -129,10 +138,12 @@ public abstract class Propiedad implements Persistible {
         this.propietario = nuevoPropietario;
     }
 
-    // Lo llama Contrato.crearContrato(): deja el contrato como vigente y lo suma al historial.
-    void asignarContrato(Contrato contrato) {
+    // Lo llama Contrato.crearContrato(): deja el contrato como vigente, lo suma al historial y ocupa la
+    // propiedad con el estado que corresponde al tipo de contrato (arrendada o finalizado), todo en un paso.
+    void asignarContrato(Contrato contrato, String nuevoEstado) {
         this.contratoActual = contrato;
         this.historial.add(contrato);
+        this.estado = nuevoEstado;
     }
 
     void liberarContrato() {
