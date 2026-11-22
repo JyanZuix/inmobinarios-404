@@ -9,6 +9,8 @@ public class Notificacion implements Persistible {
     // ===================== Tipos de aviso =====================
     public static final String PAGO_POR_VENCER = "PAGO_POR_VENCER"; // RF-16
     public static final String PAGO_EN_MORA = "PAGO_EN_MORA";       // RF-16
+    public static final String CONTRATO_POR_VENCER = "CONTRATO_POR_VENCER"; // RF-17
+    public static final String CONTRATO_VENCIDO = "CONTRATO_VENCIDO";       // RF-17 (activo con fecha de fin pasada)
 
     private String tipo;
     private String mensaje;

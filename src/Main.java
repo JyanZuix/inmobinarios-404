@@ -172,14 +172,24 @@ public class Main {
                 System.out.println("  Pago " + p.getIdPago() + " | periodo " + p.getPeriodoCubierto()
                         + " | límite " + p.getFechaLimite() + " | " + p.getEstadoPago());
             }
-            System.out.println("Avisos (los pagos ya registrados no avisan):");
-            for (Notificacion n : gestorContratos.getNotificaciones()) {
-                System.out.println("  " + n);
-            }
+            System.out.println("Avisos de pagos (los pagos ya registrados no avisan):");
+            imprimirAvisos(gestorContratos, "PAGO:");
             int cantidad = gestorContratos.getNotificaciones().size();
             sistema.recolectarNotificaciones(diaRevision); // recolectar otra vez el mismo día
             System.out.println("Recolectar de nuevo no duplica: " + cantidad + " -> "
                     + gestorContratos.getNotificaciones().size() + " avisos.");
+        });
+
+        // ---------- RF-17: avisos de contratos próximos a vencer ----------
+        titulo("RF-17: contratos próximos a vencer");
+        LocalDate otraRevision = LocalDate.of(2027, 11, 1);
+        intentar(() -> {
+            // Al 2027-11-01: los contratos 1 y 2 terminan el 2027-11-21 (en 20 días); la venta terminaba el
+            // 2027-01-21 y sigue activa (vencida); el contrato 4 termina en 2029 y no avisa.
+            sistema.recolectarNotificaciones(otraRevision);
+            System.out.println("Avisos de contratos al " + otraRevision + ":");
+            imprimirAvisos(gestorContratos, "CONTRATO:");
+            System.out.println("¿Contrato " + c3.getNumeroContrato() + " vence pronto? " + c3.vencePronto(otraRevision, 30));
         });
 
         // ---------- Persistencia (RNF-01) ----------
@@ -216,6 +226,15 @@ public class Main {
                     + " contratos vigentes; citas de " + luisCargado.getNombre() + ": "
                     + luisCargado.consultarSeguimientos(hoy));
         });
+    }
+
+    // Imprime los avisos del gestor cuyo origen empieza como se indica ("PAGO:", "CONTRATO:"...).
+    private static void imprimirAvisos(Gestor gestor, String origen) {
+        for (Notificacion n : gestor.getNotificaciones()) {
+            if (n.getIdOrigen().startsWith(origen)) {
+                System.out.println("  " + n);
+            }
+        }
     }
 
     private static long contarLineas(String archivo) {

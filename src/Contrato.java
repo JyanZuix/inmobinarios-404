@@ -18,6 +18,7 @@ public abstract class Contrato implements Persistible, Notificable {
     public static final String FINALIZADO = "finalizado";
 
     private static final String ARCHIVO = "contratos.txt";
+    private static final int DIAS_AVISO_VENCIMIENTO = 30; // RF-17: avisar los contratos que vencen en 30 días o menos
 
     // ===================== Atributo estático =====================
     // Lleva la cuenta para dar a cada contrato un número consecutivo único.
@@ -129,11 +130,36 @@ public abstract class Contrato implements Persistible, Notificable {
         // Un contrato de venta no tiene cuotas periódicas.
     }
 
+    /**
+     * True si el contrato sigue activo y su fecha de fin es dentro de los próximos "dias" días o ya pasó
+     * (un contrato vencido que nadie terminó también requiere atención). Lo usan RF-17 y RF-19, y servirá a RF-15.
+     */
+    public boolean vencePronto(LocalDate hoy, int dias) {
+        return ACTIVO.equals(estado) && !fechaFin.isAfter(hoy.plusDays(dias));
+    }
+
     // ===================== Notificable =====================
+
+    /**
+     * RF-17: un contrato activo avisa si termina en los próximos 30 días, o si ya venció y sigue activo
+     * (hay que terminarlo con RF-10 para liberar la propiedad). Los contratos finalizados no avisan.
+     */
     @Override
     public List<Notificacion> generarNotificaciones(LocalDate hoy) {
-        // AQUÍ VA RF-17: aviso de contratos próximos a vencer.
-        return new ArrayList<>();
+        List<Notificacion> avisos = new ArrayList<>();
+        if (vencePronto(hoy, DIAS_AVISO_VENCIMIENTO)) {
+            String idOrigen = "CONTRATO:" + numeroContrato;
+            String descripcion = "Contrato " + numeroContrato + " (" + propiedad.getDireccion() + ", "
+                    + cliente.getNombre() + ")";
+            if (fechaFin.isBefore(hoy)) {
+                avisos.add(new Notificacion(Notificacion.CONTRATO_VENCIDO,
+                        descripcion + " venció el " + fechaFin + " y sigue activo.", fechaFin, idOrigen));
+            } else {
+                avisos.add(new Notificacion(Notificacion.CONTRATO_POR_VENCER,
+                        descripcion + " vence el " + fechaFin + ".", fechaFin, idOrigen));
+            }
+        }
+        return avisos;
     }
 
     // ===================== Persistencia (RNF-01) =====================
