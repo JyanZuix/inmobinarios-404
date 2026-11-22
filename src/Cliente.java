@@ -12,6 +12,7 @@ import java.util.List;
 public abstract class Cliente extends Persona {
 
     private static final String ARCHIVO = "clientes.txt";
+    private static final int DIAS_AVISO_VENCIMIENTO = 30; // RF-19: mismo plazo que RF-17
 
     // ===================== Atributos (protected: los heredan las hijas) =====================
     protected String documento;
@@ -58,10 +59,35 @@ public abstract class Cliente extends Persona {
     }
 
     // ===================== Notificable =====================
+    /**
+     * RF-19: avisos del cliente: sus citas de seguimiento de hoy o vencidas (igual que un interesado, vía
+     * Persona) y, por cada contrato vigente, si vence en 30 días o menos o si tiene pagos en mora.
+     * El mensaje dice el motivo y el contrato. Usa los mismos criterios que RF-16 y RF-17, pero desde el cliente.
+     */
     @Override
     public List<Notificacion> generarNotificaciones(LocalDate hoy) {
-        // AQUÍ VA RF-19: avisos de seguimiento y de situación contractual del cliente.
-        return new ArrayList<>();
+        String idOrigen = "CLIENTE:" + clave();
+        List<Notificacion> avisos = notificacionesDeSeguimiento(hoy, idOrigen);
+        for (Contrato contrato : getContratosVigentes()) {
+            String delContrato = nombre + ": el contrato " + contrato.getNumeroContrato() + " ("
+                    + contrato.getPropiedad().getDireccion() + ")";
+            if (contrato.vencePronto(hoy, DIAS_AVISO_VENCIMIENTO)) {
+                String cuando = contrato.getFechaFin().isBefore(hoy)
+                        ? " terminó el " + contrato.getFechaFin() + " y sigue activo."
+                        : " termina el " + contrato.getFechaFin() + ".";
+                avisos.add(new Notificacion(Notificacion.CLIENTE_CONTRATO_POR_VENCER, delContrato + cuando,
+                        contrato.getFechaFin(), idOrigen + ":CONTRATO:" + contrato.getNumeroContrato()));
+            }
+            if (contrato.tienePagosVencidos(hoy)) {
+                // Fecha del evento = el pago en mora más antiguo: es la misma mientras dure esa mora, así
+                // esMismaQue() no crea un aviso nuevo cada día que se revise.
+                LocalDate desde = contrato.moraDesde(hoy);
+                avisos.add(new Notificacion(Notificacion.CLIENTE_PAGOS_EN_MORA,
+                        delContrato + " tiene pagos en mora desde el " + desde + ".", desde,
+                        idOrigen + ":CONTRATO:" + contrato.getNumeroContrato()));
+            }
+        }
+        return avisos;
     }
 
     // ===================== Persistencia (RNF-01) =====================

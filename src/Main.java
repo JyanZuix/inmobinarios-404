@@ -205,6 +205,21 @@ public class Main {
         });
         intentar(() -> apto2.agregarInteresado(sofia)); // ya es interesada en esta propiedad
 
+        // ---------- RF-19: avisos de los clientes ----------
+        titulo("RF-19: seguimientos y situación contractual de los clientes");
+        intentar(() -> {
+            // Al 2027-11-01: Ana tiene 2 contratos que terminan en 20 días y con cuotas sin pagar; Luis tiene una
+            // cita vencida (2026-11-28) y una cuota en mora; la venta de Marta venció y sigue activa.
+            // Cada cliente se visita una vez aunque tenga varios contratos.
+            sistema.recolectarNotificaciones(otraRevision);
+            System.out.println("Avisos de clientes al " + otraRevision + ":");
+            imprimirAvisos(gestorClientes, "CLIENTE:");
+            int cantidad = gestorClientes.getNotificaciones().size();
+            sistema.recolectarNotificaciones(otraRevision.plusDays(1)); // otro día: la misma mora no se repite
+            System.out.println("Revisar al día siguiente no repite avisos: " + cantidad + " -> "
+                    + gestorClientes.getNotificaciones().size() + ".");
+        });
+
         // ---------- Persistencia (RNF-01) ----------
         titulo("Persistencia");
         intentar(() -> {

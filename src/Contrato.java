@@ -122,6 +122,19 @@ public abstract class Contrato implements Persistible, Notificable {
         return ++contadorContratos;
     }
 
+    /** RF-19: true si el contrato tiene algún pago en mora a la fecha dada. Servirá también a RF-09. */
+    public boolean tienePagosVencidos(LocalDate hoy) {
+        return moraDesde(hoy) != null;
+    }
+
+    /**
+     * RF-19: fecha límite del pago en mora más antiguo, o null si no hay mora. Por defecto null, porque un
+     * contrato de venta no tiene cuotas periódicas (ContratoArriendo lo sobrescribe).
+     */
+    public LocalDate moraDesde(LocalDate hoy) {
+        return null;
+    }
+
     /**
      * RF-16: crea las cuotas pendientes que correspondan hasta la fecha dada. Por defecto no hace nada,
      * porque solo el contrato de arriendo tiene cuotas mensuales (ContratoArriendo lo sobrescribe).

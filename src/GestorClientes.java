@@ -112,6 +112,10 @@ public class GestorClientes extends Gestor {
 
     @Override
     public void recolectarNotificaciones(LocalDate hoy) {
-        // Pendiente: RF-19 (cada cliente se visita una sola vez, aunque tenga varios contratos)
+        // RF-19: cada cliente se visita una sola vez, aunque tenga varios contratos (por eso se recolecta aquí y
+        // no recorriendo los contratos).
+        for (Cliente cliente : clientes) {
+            agregarNotificaciones(cliente.generarNotificaciones(hoy));
+        }
     }
 }

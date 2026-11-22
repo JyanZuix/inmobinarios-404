@@ -165,6 +165,18 @@ public class ContratoArriendo extends Contrato {
         return avisos;
     }
 
+    /** RF-19: el pago en mora más antiguo (reutiliza Pago.estaEnMora de RF-16), o null si está al día. */
+    @Override
+    public LocalDate moraDesde(LocalDate hoy) {
+        LocalDate masAntigua = null;
+        for (Pago pago : pagos) {
+            if (pago.estaEnMora(hoy) && (masAntigua == null || pago.getFechaLimite().isBefore(masAntigua))) {
+                masAntigua = pago.getFechaLimite();
+            }
+        }
+        return masAntigua;
+    }
+
     private boolean tienePagoDelPeriodo(String periodo) {
         for (Pago pago : pagos) {
             if (pago.getPeriodoCubierto().equals(periodo)) {
