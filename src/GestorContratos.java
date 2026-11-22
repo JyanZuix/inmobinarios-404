@@ -151,6 +151,16 @@ public class GestorContratos extends Gestor {
 
     @Override
     public void recolectarNotificaciones(LocalDate hoy) {
-        // Pendiente: RF-16, RF-17
+        // Cada contrato avisa lo suyo; uno de arriendo incluye los avisos de sus pagos (RF-16).
+        for (Contrato contrato : contratos) {
+            agregarNotificaciones(contrato.generarNotificaciones(hoy));
+        }
+    }
+
+    /** RF-16: cada contrato crea las cuotas pendientes que le falten hasta la fecha dada (polimorfismo). */
+    public void generarCuotasHasta(LocalDate fecha) {
+        for (Contrato contrato : contratos) {
+            contrato.generarCuotasHasta(fecha);
+        }
     }
 }

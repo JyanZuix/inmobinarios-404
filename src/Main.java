@@ -161,6 +161,27 @@ public class Main {
         intentar(() -> sofia.registrarSeguimiento(hoy.plusDays(2)));  // fecha repetida
         intentar(() -> sofia.registrarSeguimiento(null));             // fecha nula
 
+        // ---------- RF-16: avisos de pagos en mora o por vencer ----------
+        titulo("RF-16: pagos en mora o por vencer");
+        LocalDate diaRevision = LocalDate.of(2027, 1, 30); // fecha de referencia fija para la demostración
+        intentar(() -> {
+            // El sistema crea las cuotas que falten hasta dentro de 7 días y recolecta los avisos.
+            sistema.recolectarNotificaciones(diaRevision);
+            System.out.println("Pagos del contrato " + c3.getNumeroContrato() + " al " + diaRevision + ":");
+            for (Pago p : c3.listarPagos()) {
+                System.out.println("  Pago " + p.getIdPago() + " | periodo " + p.getPeriodoCubierto()
+                        + " | límite " + p.getFechaLimite() + " | " + p.getEstadoPago());
+            }
+            System.out.println("Avisos (los pagos ya registrados no avisan):");
+            for (Notificacion n : gestorContratos.getNotificaciones()) {
+                System.out.println("  " + n);
+            }
+            int cantidad = gestorContratos.getNotificaciones().size();
+            sistema.recolectarNotificaciones(diaRevision); // recolectar otra vez el mismo día
+            System.out.println("Recolectar de nuevo no duplica: " + cantidad + " -> "
+                    + gestorContratos.getNotificaciones().size() + " avisos.");
+        });
+
         // ---------- Persistencia (RNF-01) ----------
         titulo("Persistencia");
         intentar(() -> {

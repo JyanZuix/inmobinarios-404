@@ -43,6 +43,9 @@ public class SistemaInmobiliario {
 
     /** Pide a cada gestor que recolecte los avisos de sus objetos a la fecha dada (RF-16 a RF-19). */
     public void recolectarNotificaciones(LocalDate hoy) {
+        // Paso previo explícito: las cuotas que vencen hasta dentro de 7 días deben existir para poder avisarlas
+        // (RF-16). Se hace aquí y no dentro de los avisos, para que generar avisos no cambie datos a escondidas.
+        gestorContratos.generarCuotasHasta(hoy.plusDays(7));
         for (Gestor gestor : gestores) {
             gestor.recolectarNotificaciones(hoy);
         }

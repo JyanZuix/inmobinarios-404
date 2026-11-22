@@ -121,9 +121,17 @@ public abstract class Contrato implements Persistible, Notificable {
         return ++contadorContratos;
     }
 
+    /**
+     * RF-16: crea las cuotas pendientes que correspondan hasta la fecha dada. Por defecto no hace nada,
+     * porque solo el contrato de arriendo tiene cuotas mensuales (ContratoArriendo lo sobrescribe).
+     */
+    public void generarCuotasHasta(LocalDate fecha) {
+        // Un contrato de venta no tiene cuotas periódicas.
+    }
+
     // ===================== Notificable =====================
     @Override
-    public List<Notificacion> generarNotificaciones() {
+    public List<Notificacion> generarNotificaciones(LocalDate hoy) {
         // AQUÍ VA RF-17: aviso de contratos próximos a vencer.
         return new ArrayList<>();
     }

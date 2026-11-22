@@ -1,3 +1,4 @@
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,7 +12,7 @@ public class Interesado extends Persona {
     }
 
     @Override
-    public List<Notificacion> generarNotificaciones() {
+    public List<Notificacion> generarNotificaciones(LocalDate hoy) {
         // AQUÍ VA RF-18: aviso de seguimientos pendientes.
         return new ArrayList<>();
     }

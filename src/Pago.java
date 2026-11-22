@@ -1,8 +1,10 @@
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 public class Pago implements Persistible, Notificable {
     private static final String ARCHIVO = "pagos.txt";
+    private static final int DIAS_AVISO_PREVIO = 7; // RF-16: avisar los pagos que vencen en 7 días o menos
 
     private int numeroContrato; // contrato al que pertenece; 0 mientras no se haya agregado a uno
     private int idPago;
@@ -40,9 +42,33 @@ public class Pago implements Persistible, Notificable {
         throw new UnsupportedOperationException("Pendiente: RF-06");
     }
 
+    /** Un pago está pendiente mientras no tenga fecha de pago (no se ha registrado). */
+    public boolean estaPendiente() {
+        return fechaPago == null;
+    }
+
+    /** Un pago está en mora si sigue pendiente y su fecha límite ya pasó. */
+    public boolean estaEnMora(LocalDate hoy) {
+        return estaPendiente() && fechaLimite.isBefore(hoy);
+    }
+
+    /**
+     * RF-16: un pago pendiente avisa si ya está en mora o si vence en los próximos 7 días.
+     * Un pago ya registrado no genera aviso.
+     */
     @Override
-    public List<Notificacion> generarNotificaciones() {
-        throw new UnsupportedOperationException("Pendiente: RF-16");
+    public List<Notificacion> generarNotificaciones(LocalDate hoy) {
+        List<Notificacion> avisos = new ArrayList<>();
+        String idOrigen = "PAGO:" + numeroContrato + ":" + idPago;
+        String descripcion = "Pago " + idPago + " del contrato " + numeroContrato + " (periodo " + periodoCubierto + ")";
+        if (estaEnMora(hoy)) {
+            avisos.add(new Notificacion(Notificacion.PAGO_EN_MORA,
+                    descripcion + " en mora desde el " + fechaLimite + ".", fechaLimite, idOrigen));
+        } else if (estaPendiente() && !fechaLimite.isAfter(hoy.plusDays(DIAS_AVISO_PREVIO))) {
+            avisos.add(new Notificacion(Notificacion.PAGO_POR_VENCER,
+                    descripcion + " vence el " + fechaLimite + ".", fechaLimite, idOrigen));
+        }
+        return avisos;
     }
 
     // Lo llama ContratoArriendo.agregarPago(): un pago pertenece a un solo contrato.

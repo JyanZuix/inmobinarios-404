@@ -1,4 +1,5 @@
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -128,6 +129,57 @@ public class ContratoArriendo extends Contrato {
         }
         pago.asignarContrato(numeroContrato); // el pago sabe a qué contrato pertenece (lo necesita para guardarse)
         pagos.add(pago);
+    }
+
+    // ---- Cuotas y avisos de pago (RF-16) ----
+
+    /**
+     * RF-16: crea las cuotas mensuales pendientes que falten hasta la fecha dada. La cuota k vence el mismo
+     * día del inicio, k meses después (contrato que empieza el 21 → cuotas el 21 de cada mes), mientras sea
+     * antes del fin del contrato. Si ya existe un pago para ese periodo (registrado o pendiente), no se repite.
+     */
+    @Override
+    public void generarCuotasHasta(LocalDate fecha) {
+        if (!ACTIVO.equals(estado)) {
+            return; // un contrato sin crear o finalizado no genera cuotas nuevas
+        }
+        for (int k = 0; ; k++) {
+            LocalDate limite = fechaInicio.plusMonths(k); // desde el inicio (no encadenado) para no correr el día
+            if (!limite.isBefore(fechaFin) || limite.isAfter(fecha)) {
+                break;
+            }
+            String periodo = YearMonth.from(limite).toString(); // "2026-11"
+            if (!tienePagoDelPeriodo(periodo)) {
+                incorporarPago(new Pago(siguienteIdPago(), limite, null, periodo, 0, "pendiente"));
+            }
+        }
+    }
+
+    /** RF-16: los avisos del contrato (RF-17, en la clase padre) más los de cada uno de sus pagos. */
+    @Override
+    public List<Notificacion> generarNotificaciones(LocalDate hoy) {
+        List<Notificacion> avisos = super.generarNotificaciones(hoy);
+        for (Pago pago : pagos) {
+            avisos.addAll(pago.generarNotificaciones(hoy)); // composición: el gestor no conoce los pagos
+        }
+        return avisos;
+    }
+
+    private boolean tienePagoDelPeriodo(String periodo) {
+        for (Pago pago : pagos) {
+            if (pago.getPeriodoCubierto().equals(periodo)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private int siguienteIdPago() {
+        int mayor = 0;
+        for (Pago pago : pagos) {
+            mayor = Math.max(mayor, pago.getIdPago());
+        }
+        return mayor + 1;
     }
 
     // Monto provisional: canon por los meses completos del contrato (mínimo 1). Se afina con RF-07.

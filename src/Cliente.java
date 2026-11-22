@@ -1,3 +1,4 @@
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -58,7 +59,7 @@ public abstract class Cliente extends Persona {
 
     // ===================== Notificable =====================
     @Override
-    public List<Notificacion> generarNotificaciones() {
+    public List<Notificacion> generarNotificaciones(LocalDate hoy) {
         // AQUÍ VA RF-19: avisos de seguimiento y de situación contractual del cliente.
         return new ArrayList<>();
     }

@@ -6,9 +6,6 @@ import java.util.List;
 /**
  * Clase padre de todos los gestores (GestorInmuebles, GestorClientes, GestorContratos).
  * Lo que todos hacen igual se escribe aquí una sola vez; lo que cambia queda abstracto y cada hijo lo implementa.
- *
- * No usa genéricos: cada hijo conserva su propia lista tipada (List<Propiedad>, List<Contrato>...) y le entrega
- * al padre sus objetos como Persistible a través de elementosPersistibles() (patrón "método plantilla").
  */
 public abstract class Gestor {
 
@@ -37,6 +34,25 @@ public abstract class Gestor {
 
     /** Cada hijo recorre sus objetos Notificable y guarda los avisos nuevos (RF-16 a RF-19). */
     public abstract void recolectarNotificaciones(LocalDate hoy);
+
+    /**
+     * Agrega los avisos nuevos y descarta los que ya existen (mismo hecho, ver Notificacion.esMismaQue()).
+     * Igual para todos los gestores: cada hijo lo usa dentro de su recolectarNotificaciones().
+     */
+    protected void agregarNotificaciones(List<Notificacion> nuevas) {
+        for (Notificacion nueva : nuevas) {
+            boolean yaExiste = false;
+            for (Notificacion existente : notificaciones) {
+                if (existente.esMismaQue(nueva)) {
+                    yaExiste = true;
+                    break;
+                }
+            }
+            if (!yaExiste) {
+                notificaciones.add(nueva);
+            }
+        }
+    }
 
     public List<Notificacion> listarNotificacionesPendientes() {
         throw new UnsupportedOperationException("Pendiente: RF-20");
