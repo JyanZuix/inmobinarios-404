@@ -113,6 +113,7 @@ public class ContratoArriendo extends Contrato {
                         + pago.getIdPago() + ".");
             }
         }
+        pago.asignarContrato(numeroContrato); // el pago sabe a qué contrato pertenece (lo necesita para guardarse)
         pagos.add(pago);
     }
 
@@ -133,6 +134,16 @@ public class ContratoArriendo extends Contrato {
     public LocalDate getUltimaFechaActualizacion() { return ultimaFechaActualizacion; }
 
     // ---- Persistencia: campos propios de esta hija ----
+
+    /** Guarda el contrato y, como los pagos son parte de él (composición), también cada uno de sus pagos. */
+    @Override
+    public void guardar() {
+        super.guardar();
+        for (Pago pago : pagos) {
+            pago.guardar();
+        }
+    }
+
     @Override
     protected String[] datosPropios() {
         return new String[]{

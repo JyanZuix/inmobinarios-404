@@ -164,22 +164,26 @@ public class Main {
         // ---------- Persistencia (RNF-01) ----------
         titulo("Persistencia");
         intentar(() -> {
-            dueno.guardar(); // stub: el propietario aún no persiste (AQUÍ VA)
-            apto.guardar();
-            local.guardar();
-            aptoVenta.guardar();
-            ana.guardar();
-            luis.guardar();
-            marta.guardar();
-            c1.guardar();
-            cv.guardar();
+            sistema.guardarTodo(); // cada gestor guarda lo suyo (contratos de arriendo guardan también sus pagos)
+            for (String archivo : new String[]{"propietarios.txt", "propiedades.txt", "clientes.txt",
+                    "seguimientos.txt", "contratos.txt", "pagos.txt"}) {
+                System.out.println("datos/" + archivo + ": " + contarLineas(archivo) + " registros");
+            }
+            // cargar() vuelve a leer un objeto que ya existe; recrear el sistema completo es el paso 5.
             apto.cargar();
             ana.cargar();
-            c1.cargar();
-            cv.cargar();
-            System.out.println("OK: guardado y cargado en la carpeta datos/ (propiedades, clientes, contratos).");
+            c3.cargar();
+            System.out.println("OK: guardado y vuelto a leer (propiedad, cliente y contrato).");
         });
         System.out.println("Contratos en el gestor: " + gestorContratos.getContratos().size());
+    }
+
+    private static long contarLineas(String archivo) {
+        try {
+            return java.nio.file.Files.readAllLines(java.nio.file.Paths.get("datos", archivo)).size();
+        } catch (java.io.IOException e) {
+            return 0; // el archivo no existe: no se guardó nada de ese tipo
+        }
     }
 
     private static void titulo(String t) {

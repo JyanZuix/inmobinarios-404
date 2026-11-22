@@ -7,6 +7,8 @@ import java.util.List;
  * Datos comunes de Cliente e Interesado: nombre, contacto y fechas de seguimiento (RF-12 / RF-19).
  */
 public abstract class Persona implements Persistible, Notificable {
+    private static final String ARCHIVO_SEGUIMIENTOS = "seguimientos.txt";
+
     protected String nombre;
     protected String contacto;
     // Privada: solo cambia con registrarSeguimiento(); las hijas la leen con consultarSeguimientos().
@@ -60,6 +62,19 @@ public abstract class Persona implements Persistible, Notificable {
         }
         Collections.sort(pendientes);
         return pendientes;
+    }
+
+    /**
+     * RNF-01: guarda las fechas de seguimiento en una línea propia: clave|fecha1|fecha2|...
+     * Cada hija la llama desde su guardar() con su propia clave (la Persona no sabe cómo se identifica cada hija).
+     */
+    protected void guardarSeguimientos(String clave) {
+        String[] campos = new String[fechasSeguimiento.size() + 1];
+        campos[0] = clave;
+        for (int i = 0; i < fechasSeguimiento.size(); i++) {
+            campos[i + 1] = fechasSeguimiento.get(i).toString();
+        }
+        ArchivoPlano.guardarRegistro(ARCHIVO_SEGUIMIENTOS, campos);
     }
 
     public String getNombre() {

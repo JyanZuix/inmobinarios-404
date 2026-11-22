@@ -2,6 +2,9 @@ import java.time.LocalDate;
 import java.util.List;
 
 public class Pago implements Persistible, Notificable {
+    private static final String ARCHIVO = "pagos.txt";
+
+    private int numeroContrato; // contrato al que pertenece; 0 mientras no se haya agregado a uno
     private int idPago;
     private LocalDate fechaLimite;
     private LocalDate fechaPago;
@@ -42,14 +45,58 @@ public class Pago implements Persistible, Notificable {
         throw new UnsupportedOperationException("Pendiente: RF-16");
     }
 
+    // Lo llama ContratoArriendo.agregarPago(): un pago pertenece a un solo contrato.
+    void asignarContrato(int numero) {
+        if (this.numeroContrato != 0 && this.numeroContrato != numero) {
+            throw new IllegalStateException("El pago " + idPago + " ya pertenece al contrato " + this.numeroContrato + ".");
+        }
+        this.numeroContrato = numero;
+    }
+
+    // ===================== Persistencia (RNF-01) =====================
+
     @Override
     public void guardar() {
-        // Pendiente: RNF-01
+        if (numeroContrato == 0) {
+            throw new IllegalStateException("El pago " + idPago + " no pertenece a ningún contrato: agréguelo con "
+                    + "ContratoArriendo.agregarPago() antes de guardarlo.");
+        }
+        String[] campos = {
+                clave(),                                           // clave del registro: numeroContrato:idPago
+                fechaLimite.toString(),
+                fechaPago == null ? "" : fechaPago.toString(),     // vacío mientras el pago esté pendiente
+                periodoCubierto,
+                String.valueOf(montoPagado),
+                estadoPago
+        };
+        ArchivoPlano.guardarRegistro(ARCHIVO, campos);
     }
 
     @Override
     public void cargar() {
-        // Pendiente: RNF-01
+        String[] registro = ArchivoPlano.buscarRegistro(ARCHIVO, clave());
+        if (registro == null) {
+            throw new IllegalStateException("No hay ningún pago guardado con la clave " + clave() + ".");
+        }
+        try {
+            this.fechaLimite = LocalDate.parse(registro[1]);
+            this.fechaPago = registro[2].isEmpty() ? null : LocalDate.parse(registro[2]);
+            this.periodoCubierto = registro[3];
+            this.montoPagado = Double.parseDouble(registro[4]);
+            this.estadoPago = registro[5];
+        } catch (RuntimeException e) {
+            throw new IllegalStateException("El registro guardado del pago " + clave() + " está dañado: "
+                    + e.getMessage(), e);
+        }
+    }
+
+    // Clave única: el id del pago solo es único dentro de su contrato.
+    private String clave() {
+        return numeroContrato + ":" + idPago;
+    }
+
+    public int getNumeroContrato() {
+        return numeroContrato;
     }
 
     public int getIdPago() {

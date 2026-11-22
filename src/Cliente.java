@@ -75,6 +75,7 @@ public abstract class Cliente extends Persona {
                 // El historial no se guarda aquí: se reconstruye desde los contratos, que guardan el documento.
         };
         ArchivoPlano.guardarRegistro(ARCHIVO, ArchivoPlano.concatenar(comunes, datosPropios()));
+        guardarSeguimientos(clave()); // las fechas de seguimiento van en seguimientos.txt
     }
 
     @Override

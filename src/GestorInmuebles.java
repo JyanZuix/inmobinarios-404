@@ -44,9 +44,18 @@ public class GestorInmuebles extends Gestor {
 
     // ===================== Lo que exige la clase padre Gestor =====================
 
+    /** Las propiedades y, una sola vez cada uno, sus propietarios (un dueño puede tener varias propiedades). */
     @Override
     protected List<Persistible> elementosPersistibles() {
-        return new ArrayList<>(inmuebles);
+        List<Persistible> elementos = new ArrayList<>(inmuebles);
+        List<Propietario> propietarios = new ArrayList<>();
+        for (Propiedad propiedad : inmuebles) {
+            if (!propietarios.contains(propiedad.getPropietario())) {
+                propietarios.add(propiedad.getPropietario());
+            }
+        }
+        elementos.addAll(propietarios);
+        return elementos;
     }
 
     @Override

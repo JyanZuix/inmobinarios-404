@@ -10,6 +10,8 @@ import java.util.List;
  */
 public class Propietario implements Persistible {
 
+    private static final String ARCHIVO = "propietarios.txt";
+
     private String documento;
     private String nombre;
     private String contacto;
@@ -59,13 +61,23 @@ public class Propietario implements Persistible {
     public List<Propiedad> getPropiedades() { return Collections.unmodifiableList(propiedades); }
 
     // ---- Persistencia (RNF-01) ----
+    // Sus propiedades no se guardan aquí: cada propiedad guarda el documento de su dueño y el enlace se
+    // reconstruye al cargar las propiedades.
     @Override
     public void guardar() {
-        // AQUÍ VA la persistencia de Propietario (no hace parte de RF-01 a RF-03).
+        ArchivoPlano.guardarRegistro(ARCHIVO, new String[]{documento, nombre, contacto});
     }
 
     @Override
     public void cargar() {
-        // AQUÍ VA la lectura de Propietario desde archivo.
+        String[] registro = ArchivoPlano.buscarRegistro(ARCHIVO, documento);
+        if (registro == null) {
+            throw new IllegalStateException("No hay ningún propietario guardado con el documento " + documento + ".");
+        }
+        if (registro.length < 3 || registro[1].isBlank() || registro[2].isBlank()) {
+            throw new IllegalStateException("El registro guardado del propietario " + documento + " está dañado.");
+        }
+        this.nombre = registro[1];
+        this.contacto = registro[2];
     }
 }

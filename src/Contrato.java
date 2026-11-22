@@ -127,13 +127,14 @@ public abstract class Contrato implements Persistible, Notificable {
         }
         String[] comunes = {
                 String.valueOf(numeroContrato),     // clave del registro
+                getClass().getSimpleName(),         // tipo (ContratoArriendo / ContratoVenta): para recrearlo al cargar
                 fechaInicio.toString(),
                 fechaFin.toString(),
                 estado,
                 propiedad.getDireccion(),           // solo se guarda la referencia
                 cliente.getDocumento()              // solo se guarda la referencia
         };
-        // AQUÍ VA: cuando exista RF-05, ContratoArriendo.guardar() deberá delegar también en sus Pago.
+        // ContratoArriendo sobrescribe guardar() para guardar también sus pagos.
         ArchivoPlano.guardarRegistro(ARCHIVO, ArchivoPlano.concatenar(comunes, datosPropios()));
     }
 
@@ -147,19 +148,20 @@ public abstract class Contrato implements Persistible, Notificable {
             throw new IllegalStateException("No hay ningún contrato guardado con el número " + numeroContrato + ".");
         }
         try {
-            LocalDate inicio = LocalDate.parse(registro[1]);
-            LocalDate fin = LocalDate.parse(registro[2]);
+            // registro[1] es el tipo del contrato: solo se usa al recrear el sistema (GestorContratos.cargarTodo).
+            LocalDate inicio = LocalDate.parse(registro[2]);
+            LocalDate fin = LocalDate.parse(registro[3]);
             validarFechas(inicio, fin);
-            String estadoGuardado = registro[3];
+            String estadoGuardado = registro[4];
             if (!ACTIVO.equals(estadoGuardado) && !FINALIZADO.equals(estadoGuardado)) {
                 throw new IllegalArgumentException("estado desconocido '" + estadoGuardado + "'");
             }
             this.fechaInicio = inicio;
             this.fechaFin = fin;
             this.estado = estadoGuardado;
-            // registro[4] (dirección de la propiedad) y registro[5] (documento del cliente) son referencias:
-            // se reconectan cuando los gestores carguen todo el sistema (mejora futura).
-            aplicarDatosPropios(Arrays.copyOfRange(registro, 6, registro.length));
+            // registro[5] (dirección de la propiedad) y registro[6] (documento del cliente) son referencias:
+            // las reconecta GestorContratos.cargarTodo() al recrear el sistema.
+            aplicarDatosPropios(Arrays.copyOfRange(registro, 7, registro.length));
         } catch (RuntimeException e) {
             throw new IllegalStateException("El registro guardado del contrato " + numeroContrato
                     + " está dañado: " + e.getMessage(), e);
