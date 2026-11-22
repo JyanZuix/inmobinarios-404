@@ -169,13 +169,32 @@ public class Main {
                     "seguimientos.txt", "contratos.txt", "pagos.txt"}) {
                 System.out.println("datos/" + archivo + ": " + contarLineas(archivo) + " registros");
             }
-            // cargar() vuelve a leer un objeto que ya existe; recrear el sistema completo es el paso 5.
-            apto.cargar();
-            ana.cargar();
-            c3.cargar();
-            System.out.println("OK: guardado y vuelto a leer (propiedad, cliente y contrato).");
         });
-        System.out.println("Contratos en el gestor: " + gestorContratos.getContratos().size());
+
+        // Simula un reinicio: un sistema NUEVO, vacío, que se recrea solo desde los archivos de datos/.
+        titulo("Persistencia: recargar el sistema desde archivos");
+        intentar(() -> {
+            SistemaInmobiliario recargado = new SistemaInmobiliario();
+            recargado.cargarTodo(); // inmuebles → clientes → contratos (y sus pagos)
+            System.out.println("Recuperados: " + recargado.getGestorInmuebles().getInmuebles().size() + " propiedades, "
+                    + recargado.getGestorClientes().getClientes().size() + " clientes, "
+                    + recargado.getGestorContratos().getContratos().size() + " contratos.");
+
+            Propiedad localCargado = recargado.getGestorInmuebles().buscarPropiedad(local.getDireccion());
+            System.out.println(localCargado.getDireccion() + ": '" + localCargado.getEstado() + "', dueño "
+                    + localCargado.getPropietario().getNombre() + ", contrato actual N° "
+                    + localCargado.getContratoActual().getNumeroContrato());
+
+            ContratoArriendo c3Cargado = (ContratoArriendo) localCargado.getContratoActual();
+            System.out.println("Canon tras RF-07 = " + c3Cargado.getCanonActual() + "; pagos = "
+                    + c3Cargado.listarPagos().size());
+
+            Arrendatario anaCargada = recargado.getGestorClientes().buscarArrendatario(ana.getDocumento());
+            Arrendatario luisCargado = recargado.getGestorClientes().buscarArrendatario(luis.getDocumento());
+            System.out.println(anaCargada.getNombre() + " tiene " + anaCargada.getContratosVigentes().size()
+                    + " contratos vigentes; citas de " + luisCargado.getNombre() + ": "
+                    + luisCargado.consultarSeguimientos(hoy));
+        });
     }
 
     private static long contarLineas(String archivo) {
