@@ -192,6 +192,19 @@ public class Main {
             System.out.println("¿Contrato " + c3.getNumeroContrato() + " vence pronto? " + c3.vencePronto(otraRevision, 30));
         });
 
+        // ---------- RF-18: avisos de seguimientos de interesados ----------
+        titulo("RF-18: seguimientos de interesados");
+        intentar(() -> {
+            // Sofía (RF-12) se interesa en dos propiedades; sus citas: 2026-11-16 (vencida), hoy, +2 y +10 días.
+            aptoVenta.agregarInteresado(sofia);
+            apto2.agregarInteresado(sofia);
+            sistema.recolectarNotificaciones(hoy);
+            System.out.println("Avisos de interesados al " + hoy + " (las citas futuras no avisan; cada cita una vez,"
+                    + " aunque Sofía esté en dos propiedades):");
+            imprimirAvisos(gestorInmuebles, "INTERESADO:");
+        });
+        intentar(() -> apto2.agregarInteresado(sofia)); // ya es interesada en esta propiedad
+
         // ---------- Persistencia (RNF-01) ----------
         titulo("Persistencia");
         intentar(() -> {

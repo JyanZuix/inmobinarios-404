@@ -117,6 +117,18 @@ public class GestorInmuebles extends Gestor {
 
     @Override
     public void recolectarNotificaciones(LocalDate hoy) {
-        // Pendiente: RF-18
+        // RF-18: los interesados de todas las propiedades, cada uno una sola vez (uno puede estar interesado en
+        // varias propiedades y no debe avisar dos veces la misma cita).
+        List<Interesado> interesados = new ArrayList<>();
+        for (Propiedad propiedad : inmuebles) {
+            for (Interesado interesado : propiedad.getInteresados()) {
+                if (!interesados.contains(interesado)) {
+                    interesados.add(interesado);
+                }
+            }
+        }
+        for (Interesado interesado : interesados) {
+            agregarNotificaciones(interesado.generarNotificaciones(hoy));
+        }
     }
 }

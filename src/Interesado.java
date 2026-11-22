@@ -1,9 +1,8 @@
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Interesado en un inmueble. Nombre, contacto y seguimientos vienen de Persona (RF-11 y RF-12 vienen después).
+ * Interesado en un inmueble. Nombre, contacto y seguimientos vienen de Persona.
  */
 public class Interesado extends Persona {
 
@@ -11,10 +10,10 @@ public class Interesado extends Persona {
         super(nombre, contacto);
     }
 
+    /** RF-18: avisa cada cita de seguimiento que es hoy o ya pasó. No tiene documento: se identifica por su contacto. */
     @Override
     public List<Notificacion> generarNotificaciones(LocalDate hoy) {
-        // AQUÍ VA RF-18: aviso de seguimientos pendientes.
-        return new ArrayList<>();
+        return notificacionesDeSeguimiento(hoy, "INTERESADO:" + contacto);
     }
 
     @Override

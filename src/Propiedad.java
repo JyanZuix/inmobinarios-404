@@ -111,8 +111,19 @@ public abstract class Propiedad implements Persistible {
      */
     public abstract double calcularDepositoGarantia();
 
+    /**
+     * Asocia un interesado a la propiedad (mínimo de RF-11, necesario para RF-18).
+     * Pendiente de RF-11: que un interesado no pueda existir sin al menos un inmueble, y su persistencia.
+     */
     public void agregarInteresado(Interesado interesado) {
-        // Pendiente: RF-11
+        if (interesado == null) {
+            throw new IllegalArgumentException("No se puede agregar un interesado nulo.");
+        }
+        if (interesados.contains(interesado)) {
+            throw new IllegalArgumentException("La propiedad '" + direccion + "' ya tiene entre sus interesados a "
+                    + interesado.getNombre() + ".");
+        }
+        interesados.add(interesado);
     }
 
     // AQUÍ VA RF-13 (listar disponibles por modalidad): vive en GestorInmuebles, no en la propiedad.

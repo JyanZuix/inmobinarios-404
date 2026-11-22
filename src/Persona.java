@@ -65,6 +65,23 @@ public abstract class Persona implements Persistible, Notificable {
     }
 
     /**
+     * RF-18 / RF-19: un aviso SEGUIMIENTO por cada cita que es hoy o ya pasó (la cita vencida sigue avisando
+     * hasta que el agente marque el aviso como atendido; esMismaQue() evita repetirlo). Las citas futuras no
+     * avisan. Cada hija lo llama desde generarNotificaciones() con su propio idOrigen.
+     */
+    protected List<Notificacion> notificacionesDeSeguimiento(LocalDate hoy, String idOrigen) {
+        List<Notificacion> avisos = new ArrayList<>();
+        for (LocalDate cita : fechasSeguimiento) {
+            if (!cita.isAfter(hoy)) {
+                String cuando = cita.isEqual(hoy) ? "es hoy (" + cita + ")" : "estaba para el " + cita + " (vencido)";
+                avisos.add(new Notificacion(Notificacion.SEGUIMIENTO,
+                        "Seguimiento con " + nombre + " (" + contacto + ") " + cuando + ".", cita, idOrigen));
+            }
+        }
+        return avisos;
+    }
+
+    /**
      * RNF-01: guarda las fechas de seguimiento en una línea propia: clave|fecha1|fecha2|...
      * Cada hija la llama desde su guardar() con su propia clave (la Persona no sabe cómo se identifica cada hija).
      */
