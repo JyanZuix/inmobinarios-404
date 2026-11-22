@@ -1,3 +1,4 @@
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -5,11 +6,10 @@ import java.util.List;
 /**
  * Gestor de contratos: agrupa todos los contratos del agente (RF-03).
  */
-public class GestorContratos {
+public class GestorContratos extends Gestor {
 
     private final GestorInmuebles inmuebles; // inventario contra el que se verifica que la propiedad exista
     private final List<Contrato> contratos = new ArrayList<>();
-    private final List<Notificacion> notificaciones = new ArrayList<>();
 
     public GestorContratos(GestorInmuebles inmuebles) {
         if (inmuebles == null) {
@@ -49,19 +49,24 @@ public class GestorContratos {
         throw new UnsupportedOperationException("Pendiente: RF-15");
     }
 
-    public void recolectarNotificaciones() {
-        // Pendiente: RF-16, RF-17, RF-19
-    }
-
-    public List<Notificacion> listarNotificacionesPendientes() {
-        throw new UnsupportedOperationException("Pendiente: RF-20");
-    }
-
     public List<Contrato> getContratos() {
         return Collections.unmodifiableList(contratos);
     }
 
-    public List<Notificacion> getNotificaciones() {
-        return Collections.unmodifiableList(notificaciones);
+    // ===================== Lo que exige la clase padre Gestor =====================
+
+    @Override
+    protected List<Persistible> elementosPersistibles() {
+        return new ArrayList<>(contratos);
+    }
+
+    @Override
+    public void cargarTodo() {
+        // Pendiente: RNF-01
+    }
+
+    @Override
+    public void recolectarNotificaciones(LocalDate hoy) {
+        // Pendiente: RF-16, RF-17
     }
 }

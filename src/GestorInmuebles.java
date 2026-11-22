@@ -1,3 +1,4 @@
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -6,10 +7,9 @@ import java.util.List;
  * Gestor del inventario de inmuebles del agente.
  * Es quien sabe qué propiedades están registradas, por eso valida aquí que no haya direcciones repetidas.
  */
-public class GestorInmuebles {
+public class GestorInmuebles extends Gestor {
 
     private final List<Propiedad> inmuebles = new ArrayList<>();
-    private final List<Notificacion> notificaciones = new ArrayList<>();
 
     /**
      * RF-01: registra una propiedad en el inventario.
@@ -38,19 +38,24 @@ public class GestorInmuebles {
         throw new UnsupportedOperationException("Pendiente: RF-13");
     }
 
-    public void recolectarNotificaciones() {
-        // Pendiente: RF-18
-    }
-
-    public List<Notificacion> listarNotificacionesPendientes() {
-        throw new UnsupportedOperationException("Pendiente: RF-20");
-    }
-
     public List<Propiedad> getInmuebles() {
         return Collections.unmodifiableList(inmuebles);
     }
 
-    public List<Notificacion> getNotificaciones() {
-        return Collections.unmodifiableList(notificaciones);
+    // ===================== Lo que exige la clase padre Gestor =====================
+
+    @Override
+    protected List<Persistible> elementosPersistibles() {
+        return new ArrayList<>(inmuebles);
+    }
+
+    @Override
+    public void cargarTodo() {
+        // Pendiente: RNF-01
+    }
+
+    @Override
+    public void recolectarNotificaciones(LocalDate hoy) {
+        // Pendiente: RF-18
     }
 }
