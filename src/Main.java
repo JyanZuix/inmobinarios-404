@@ -7,9 +7,11 @@ import java.time.LocalDate;
 public class Main {
 
     public static void main(String[] args) {
-        GestorInmuebles gestorInmuebles = new GestorInmuebles();
-        GestorClientes gestorClientes = new GestorClientes();
-        GestorContratos gestorContratos = new GestorContratos(gestorInmuebles, gestorClientes);
+        // El sistema crea los gestores con sus dependencias; Main solo los pide.
+        SistemaInmobiliario sistema = new SistemaInmobiliario();
+        GestorInmuebles gestorInmuebles = sistema.getGestorInmuebles();
+        GestorClientes gestorClientes = sistema.getGestorClientes();
+        GestorContratos gestorContratos = sistema.getGestorContratos();
 
         // ---------- RF-01: registrar propiedades ----------
         titulo("RF-01: registrar propiedades");
