@@ -53,6 +53,12 @@ public class ContratoVenta extends Contrato {
         return Propiedad.FINALIZADO;
     }
 
+    @Override
+    public String toString() {
+        return super.toString() + " | cuota inicial: " + Utilidades.moneda(cuotaInicial) + " | saldo financiado: "
+                + Utilidades.moneda(saldoFinanciado);
+    }
+
     public double getValorVenta() { return valorVenta; }
     public double getCuotaInicial() { return cuotaInicial; }
     public double getSaldoFinanciado() { return saldoFinanciado; }

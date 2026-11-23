@@ -29,14 +29,30 @@ public class Main {
             gestorInmuebles.agregarPropiedad(aptoVenta);
             gestorInmuebles.agregarPropiedad(apto2);
             System.out.println("OK: propiedades registradas = " + Propiedad.getTotalPropiedades());
-            System.out.println("Depósito apto  = " + apto.calcularDepositoGarantia());
-            System.out.println("Depósito local = " + local.calcularDepositoGarantia() + " (2 x valor + IVA)");
+            System.out.println("  " + apto);
+            System.out.println("  " + local);
+            System.out.println("Depósito apto  = " + Utilidades.moneda(apto.calcularDepositoGarantia()));
+            System.out.println("Depósito local = " + Utilidades.moneda(local.calcularDepositoGarantia())
+                    + " (2 x valor + IVA)");
         });
         intentar(() -> gestorInmuebles.agregarPropiedad(
                 new Apartamento("calle 100  #15-20 apto 301", 60, 1_800_000, "Arriendo", dueno, 2))); // dirección repetida
+        intentar(() -> gestorInmuebles.agregarPropiedad(
+                new Apartamento("Calle 100 # 15 - 20 Apto 301", 60, 1_800_000, "Arriendo", dueno, 2))); // igual, con espacios
+        intentar(() -> gestorInmuebles.agregarPropiedad(new Apartamento("Calle 4 #4-4", 40, 1_000_000, "Arriendo",
+                new Propietario("100.200.300", "Otro Carlos", "3000000000"), 1)));        // otro dueño, mismo documento
         intentar(() -> new Apartamento("Calle 1 #1-1", -5, 1_000_000, "Arriendo", dueno, 2));       // área inválida
         intentar(() -> new LocalComercial("Calle 2 #2-2", 30, 1_000_000, "Alquiler", dueno));       // modo inválido
         intentar(() -> new LocalComercial("Calle 3 #3-3", 30, 1_000_000, "Arriendo", null));        // sin propietario
+        intentar(() -> new Propietario("CC100", "Sin números", "3001112233"));                        // documento con letras
+        // Quitar una propiedad registrada por error (nunca ha tenido contratos ni interesados)
+        intentar(() -> {
+            gestorInmuebles.agregarPropiedad(new LocalComercial("Calle 5 #5-5", 20, 800_000, "Arriendo", dueno));
+            gestorInmuebles.quitarPropiedad("calle 5 # 5-5");
+            System.out.println("OK: 'Calle 5 #5-5' registrada y quitada; sigue en el inventario: "
+                    + (gestorInmuebles.buscarPropiedad("Calle 5 #5-5") != null));
+        });
+        intentar(() -> gestorInmuebles.quitarPropiedad("Calle 99 #99-99"));                         // no existe
         // Las propiedades rechazadas no quedan en la lista del propietario ni en el contador.
         System.out.println("Propiedades de " + dueno.getNombre() + " = " + dueno.getPropiedades().size()
                 + "; total registradas = " + Propiedad.getTotalPropiedades());
@@ -55,7 +71,12 @@ public class Main {
         });
         intentar(() -> gestorClientes.agregarCliente(
                 new Arrendatario(" 52111222 ", "Otra Persona", "x@y.com")));          // documento repetido
+        intentar(() -> gestorClientes.agregarCliente(
+                new Arrendatario("52.111.222", "Otra Persona", "x@y.com")));          // el mismo documento, con puntos
         intentar(() -> new Arrendatario("", "Sin documento", "x@y.com"));         // documento vacío
+        intentar(() -> new Arrendatario("52111ABC", "Con letras", "x@y.com"));    // documento con letras
+        intentar(() -> new Arrendatario("80123456", "Contacto malo", "asdf"));    // contacto que no es teléfono ni correo
+        System.out.println("Búsqueda con puntos: " + gestorClientes.buscarArrendatario("52.111.222"));
 
         // ---------- RF-03: crear contratos ----------
         titulo("RF-03: crear contratos");
@@ -67,7 +88,8 @@ public class Main {
         intentar(() -> {
             gestorContratos.agregarContrato(c1);
             System.out.println("OK: contrato " + c1.getNumeroContrato() + " creado; propiedad ahora '"
-                    + apto.getEstado() + "'; monto final = " + c1.calcularMontoFinal());
+                    + apto.getEstado() + "'");
+            System.out.println("  " + c1);
         });
         // Propiedad ya arrendada (RF-04)
         intentar(() -> gestorContratos.agregarContrato(new ContratoArriendo(apto, luis, hoy, hoy.plusYears(1), 0.05)));
@@ -85,6 +107,10 @@ public class Main {
         intentar(() -> new ContratoArriendo(local, luis, hoy, hoy.minusDays(3), 0.05));
         // Modo incorrecto
         intentar(() -> new ContratoArriendo(aptoVenta, luis, hoy, hoy.plusYears(1), 0.05));
+        // Arriendo de menos de un mes
+        intentar(() -> new ContratoArriendo(local, luis, hoy, hoy.plusDays(20), 0.05));
+        // Una propiedad con contrato no se puede quitar del inventario
+        intentar(() -> gestorInmuebles.quitarPropiedad(apto.getDireccion()));
         // Un cliente puede firmar varios contratos: Ana arrienda también apto2
         intentar(() -> {
             gestorContratos.agregarContrato(new ContratoArriendo(apto2, ana, hoy, hoy.plusYears(1), 0.05));
@@ -96,7 +122,8 @@ public class Main {
         intentar(() -> {
             gestorContratos.agregarContrato(cv);
             System.out.println("OK: contrato " + cv.getNumeroContrato() + " (venta); propiedad ahora '"
-                    + aptoVenta.getEstado() + "'; saldo financiado = " + cv.getSaldoFinanciado());
+                    + aptoVenta.getEstado() + "'");
+            System.out.println("  " + cv);
         });
         // Un contrato que no se ha registrado en el gestor no se puede guardar
         ContratoArriendo sinCrear = new ContratoArriendo(local, luis, hoy, hoy.plusYears(1), 0.03);

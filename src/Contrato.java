@@ -150,7 +150,7 @@ public abstract class Contrato implements Persistible, Notificable {
 
     /**
      * True si el contrato sigue activo y su fecha de fin es dentro de los próximos "dias" días o ya pasó
-     * (un contrato vencido que nadie terminó también requiere atención). Lo usan RF-17 y RF-19, y servirá a RF-15.
+     * (un contrato vencido que nadie terminó también requiere atención). Lo usan RF-17 y RF-19.
      */
     public boolean vencePronto(LocalDate hoy, int dias) {
         return ACTIVO.equals(estado) && !fechaFin.isAfter(hoy.plusDays(dias));
@@ -237,6 +237,18 @@ public abstract class Contrato implements Persistible, Notificable {
 
     protected void aplicarDatosPropios(String[] datos) {
         // Sin datos propios por defecto.
+    }
+
+    /**
+     * Ficha del contrato para mostrarla en pantalla. Las hijas le agregan sus montos propios.
+     * Un contrato que todavía no se registró en el gestor no tiene número ni estado.
+     */
+    @Override
+    public String toString() {
+        String numero = estado == null ? "(sin registrar)" : "N° " + numeroContrato;
+        return "Contrato " + numero + " | " + propiedad.getDireccion() + " | " + cliente.getNombre()
+                + " | del " + fechaInicio + " al " + fechaFin + " | estado: " + (estado == null ? "-" : estado)
+                + " | monto final: " + Utilidades.moneda(calcularMontoFinal());
     }
 
     // ===================== Getters =====================

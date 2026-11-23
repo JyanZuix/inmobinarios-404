@@ -21,6 +21,7 @@ public class ContratoArriendo extends Contrato {
                             double porcentajeIncremento) {
         super(propiedad, cliente, fechaInicio, fechaFin);
         validarModo(propiedad);
+        validarDuracion(fechaInicio, fechaFin);
         validarPorcentaje(porcentajeIncremento);
         // El canon inicial es el valor base de la propiedad.
         this.canonActual = propiedad.getValorBase();
@@ -34,6 +35,7 @@ public class ContratoArriendo extends Contrato {
                             double canonActual, double porcentajeIncremento, LocalDate ultimaFechaActualizacion) {
         super(numeroContrato, propiedad, cliente, fechaInicio, fechaFin, estado);
         validarModo(propiedad);
+        validarDuracion(fechaInicio, fechaFin);
         validarPorcentaje(porcentajeIncremento);
         if (!(canonActual > 0) || Double.isInfinite(canonActual)) {
             throw new IllegalArgumentException("El canon debe ser mayor a cero (se recibió: " + canonActual + ").");
@@ -194,7 +196,7 @@ public class ContratoArriendo extends Contrato {
         return mayor + 1;
     }
 
-    // Monto provisional: canon por los meses completos del contrato (mínimo 1). Se afina con RF-07.
+    // Monto provisional: canon por los meses completos del contrato (siempre es 1 o más, ver validarDuracion).
     @Override
     public double calcularMontoFinal() {
         long meses = Math.max(1, ChronoUnit.MONTHS.between(fechaInicio, fechaFin));
@@ -204,6 +206,12 @@ public class ContratoArriendo extends Contrato {
     @Override
     protected String estadoPropiedadAlCrear() {
         return Propiedad.ARRENDADA;
+    }
+
+    @Override
+    public String toString() {
+        return super.toString() + " | canon actual: " + Utilidades.moneda(canonActual) + " | incremento anual: "
+                + Utilidades.porcentaje(porcentajeIncremento);
     }
 
     public double getCanonActual() { return canonActual; }
@@ -242,6 +250,15 @@ public class ContratoArriendo extends Contrato {
         if (!Propiedad.MODO_ARRIENDO.equals(propiedad.getModo())) {
             throw new IllegalArgumentException("No se puede crear un contrato de arriendo: la propiedad '"
                     + propiedad.getDireccion() + "' está en modo " + propiedad.getModo() + ".");
+        }
+    }
+
+    // RF-03 / RNF-02: un arriendo dura mínimo un mes (el canon es mensual; un contrato de días no tiene sentido).
+    private static void validarDuracion(LocalDate fechaInicio, LocalDate fechaFin) {
+        if (fechaFin.isBefore(fechaInicio.plusMonths(1))) {
+            throw new IllegalArgumentException("Un contrato de arriendo debe durar mínimo un mes: del " + fechaInicio
+                    + " al " + fechaFin + " no alcanza (la fecha de fin debe ser el " + fechaInicio.plusMonths(1)
+                    + " o después).");
         }
     }
 
