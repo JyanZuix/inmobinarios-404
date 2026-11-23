@@ -36,9 +36,33 @@ public class GestorInmuebles extends Gestor {
         Propiedad.contarRegistro(); // suma al contador estático de propiedades registradas
     }
 
+        /**
+     * RF-13: consulta los inmuebles disponibles según la modalidad ("Arriendo" o "Venta").
+     */
     public List<Propiedad> listarDisponibles(String modalidad) {
-        throw new UnsupportedOperationException("Pendiente: RF-13");
+        if (modalidad == null || modalidad.isBlank()) {
+            throw new IllegalArgumentException("La modalidad es obligatoria para consultar inmuebles disponibles.");
+        }
+        String modalidadNormalizada = modalidad.trim();
+        if (Propiedad.MODO_ARRIENDO.equalsIgnoreCase(modalidadNormalizada)) {
+            modalidadNormalizada = Propiedad.MODO_ARRIENDO;
+        } else if (Propiedad.MODO_VENTA.equalsIgnoreCase(modalidadNormalizada)) {
+            modalidadNormalizada = Propiedad.MODO_VENTA;
+        } else {
+            throw new IllegalArgumentException("Modalidad no válida: '" + modalidad
+                    + "'. Debe ser '" + Propiedad.MODO_ARRIENDO + "' o '" + Propiedad.MODO_VENTA + "'.");
+        }
+
+        List<Propiedad> resultado = new ArrayList<>();
+        for (Propiedad propiedad : inmuebles) {
+            if (Propiedad.DISPONIBLE.equalsIgnoreCase(propiedad.getEstado())
+                    && modalidadNormalizada.equalsIgnoreCase(propiedad.getModo())) {
+                resultado.add(propiedad);
+            }
+        }
+        return resultado;
     }
+
 
     /** Devuelve la propiedad registrada con esa dirección (sin importar mayúsculas), o null si no existe. */
     public Propiedad buscarPropiedad(String direccion) {
