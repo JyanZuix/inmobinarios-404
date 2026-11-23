@@ -75,9 +75,28 @@ public class GestorContratos extends Gestor {
         generarCuotasHasta(hoy);
     }
 
+        /**
+     * RF-15: lista los contratos activos cuya fecha de fin vence dentro de los próximos 'dias'
+     * (o ya vencieron y siguen activos).
+     */
     public List<Contrato> listarContratosPorVencer(int dias) {
-        throw new UnsupportedOperationException("Pendiente: RF-15");
+        if (dias < 0) {
+            throw new IllegalArgumentException("El número de días no puede ser negativo (se recibió: " + dias + ").");
+        }
+        LocalDate hoy = LocalDate.now();
+        LocalDate fechaLimite = hoy.plusDays(dias);
+
+        List<Contrato> porVencer = new ArrayList<>();
+        for (Contrato contrato : contratos) {
+            boolean estaActivo = !"finalizado".equalsIgnoreCase(contrato.getEstado());
+            LocalDate fechaFin = contrato.getFechaFin();
+            if (estaActivo && fechaFin != null && !fechaFin.isAfter(fechaLimite)) {
+                porVencer.add(contrato);
+            }
+        }
+        return porVencer;
     }
+
 
     public List<Contrato> getContratos() {
         return Collections.unmodifiableList(contratos);
