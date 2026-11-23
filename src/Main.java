@@ -237,6 +237,35 @@ public class Main {
                     + gestorClientes.getNotificaciones().size() + ".");
         });
 
+        // ---------- RF-20: ver las notificaciones pendientes ----------
+        titulo("RF-20: notificaciones pendientes");
+        intentar(() -> {
+            // se juntan las de los 3 gestores, sin las atendidas y ordenadas por la fecha del evnto
+            List<Notificacion> pendientes = sistema.listarNotificacionesPendientes();
+            System.out.println("Pendientes: " + pendientes.size() + " (se muestran las primeras 5)");
+            for (int i = 0; i < pendientes.size() && i < 5; i++) {
+                System.out.println("  " + pendientes.get(i));
+            }
+        });
+
+        // ---------- RF-21: marcar una notificacion como atendida ----------
+        titulo("RF-21: marcar una notificación como atendida");
+        String[] claveAtendida = new String[1]; // para revisarla despues de recargar
+        intentar(() -> {
+            // se marca la primera pendiente, la mas viejaa
+            Notificacion primera = sistema.listarNotificacionesPendientes().get(0);
+            int antes = sistema.listarNotificacionesPendientes().size();
+            sistema.marcarNotificacionAtendida(primera);
+            claveAtendida[0] = primera.clave();
+            System.out.println("Atendida: " + primera);
+            System.out.println("Pendientes: " + antes + " -> " + sistema.listarNotificacionesPendientes().size());
+            // si se recolecta otra vez el mismo evento no vuelve a salir
+            sistema.recolectarNotificaciones(hoy);
+            sistema.recolectarNotificaciones(otraRevision);
+            System.out.println("Recolectar de nuevo no la revive: ¿sigue pendiente? "
+                    + sistema.listarNotificacionesPendientes().contains(primera));
+        });
+
         // ---------- RF-10: terminar un contrato y liberar la propiedad ----------
         titulo("RF-10: terminar un contrato y liberar la propiedad");
         intentar(() -> {
@@ -255,7 +284,7 @@ public class Main {
         intentar(() -> {
             sistema.guardarTodo(); // cada gestor guarda lo suyo (contratos de arriendo guardan también sus pagos)
             for (String archivo : new String[]{"propietarios.txt", "propiedades.txt", "clientes.txt",
-                    "interesados.txt", "seguimientos.txt", "contratos.txt", "pagos.txt"}) {
+                    "interesados.txt", "seguimientos.txt", "contratos.txt", "pagos.txt", "notificaciones.txt"}) {
                 System.out.println("datos/" + archivo + ": " + contarLineas(archivo) + " registros");
             }
         });
@@ -290,6 +319,18 @@ public class Main {
                 System.out.println(interesado.getNombre() + ": " + interesado.getInmuebles().size()
                         + " inmuebles y citas " + interesado.consultarSeguimientos(hoy));
             }
+
+            // RF-21 la notificacion atendida sigue atendida despues del reinico
+            recargado.recolectarNotificaciones(hoy);
+            boolean sigueAtendida = true;
+            for (Notificacion n : recargado.listarNotificacionesPendientes()) {
+                if (n.clave().equals(claveAtendida[0])) {
+                    sigueAtendida = false;
+                }
+            }
+            System.out.println("Notificaciones pendientes tras recargar: "
+                    + recargado.listarNotificacionesPendientes().size()
+                    + " | la atendida sigue atendida: " + sigueAtendida);
         });
     }
 
