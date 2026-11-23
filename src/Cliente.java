@@ -23,10 +23,8 @@ public abstract class Cliente extends Persona {
     // ===================== Constructor =====================
     protected Cliente(String documento, String nombre, String contacto) {
         super(nombre, contacto); // valida nombre y contacto
-        if (documento == null || documento.isBlank()) {
-            throw new IllegalArgumentException("El documento del cliente es obligatorio.");
-        }
-        this.documento = documento.trim();
+        // "52.111.222" y "52111222" son el mismo documento: se guarda solo con números (RF-02).
+        this.documento = Utilidades.normalizarDocumento(documento, "cliente");
         // RF-02 (documento no repetido) lo verifica GestorClientes.agregarCliente(), que conoce a todos los clientes.
     }
 
@@ -134,6 +132,12 @@ public abstract class Cliente extends Persona {
 
     protected void aplicarDatosPropios(String[] datos) {
         // Sin datos propios por defecto.
+    }
+
+    /** Ficha del cliente para mostrarla en pantalla: lo que dice describir() más el contacto. */
+    @Override
+    public String toString() {
+        return describir() + " | contacto: " + contacto + " | contratos vigentes: " + getContratosVigentes().size();
     }
 
     // ===================== Getters =====================

@@ -30,8 +30,9 @@ public class GestorClientes extends Gestor {
         clientes.add(cliente);
     }
 
-    /** Devuelve el arrendatario con ese documento, o null si no está registrado. */
+    /** Devuelve el arrendatario con ese documento (con o sin puntos), o null si no está registrado. */
     public Arrendatario buscarArrendatario(String documento) {
+        documento = Utilidades.limpiarDocumento(documento);
         for (Cliente cliente : clientes) {
             if (cliente instanceof Arrendatario && cliente.getDocumento().equals(documento)) {
                 return (Arrendatario) cliente;
@@ -40,8 +41,9 @@ public class GestorClientes extends Gestor {
         return null;
     }
 
-    /** Devuelve el comprador con ese documento, o null si no está registrado. */
+    /** Devuelve el comprador con ese documento (con o sin puntos), o null si no está registrado. */
     public Comprador buscarComprador(String documento) {
+        documento = Utilidades.limpiarDocumento(documento);
         for (Cliente cliente : clientes) {
             if (cliente instanceof Comprador && cliente.getDocumento().equals(documento)) {
                 return (Comprador) cliente;

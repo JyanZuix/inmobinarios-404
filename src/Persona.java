@@ -18,18 +18,12 @@ public abstract class Persona implements Persistible, Notificable {
         if (nombre == null || nombre.isBlank()) {
             throw new IllegalArgumentException("El nombre es obligatorio.");
         }
-        if (contacto == null || contacto.isBlank()) {
-            throw new IllegalArgumentException("El contacto es obligatorio.");
-        }
         this.nombre = nombre.trim();
-        this.contacto = contacto.trim();
+        this.contacto = Utilidades.validarContacto(contacto); // teléfono de 7 a 10 dígitos o correo
     }
 
     public void actualizarContacto(String nuevoContacto) {
-        if (nuevoContacto == null || nuevoContacto.isBlank()) {
-            throw new IllegalArgumentException("El contacto no puede quedar vacío.");
-        }
-        this.contacto = nuevoContacto.trim();
+        this.contacto = Utilidades.validarContacto(nuevoContacto);
     }
 
     /**
