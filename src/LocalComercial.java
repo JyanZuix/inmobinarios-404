@@ -4,7 +4,7 @@
  */
 public class LocalComercial extends Propiedad {
 
-        // Constante estática compartida por todos los locales (RF-14).
+    // Constante estática compartida por todos los locales (RF-14).
     public static final double TASA_IVA = 0.19;
 
     public LocalComercial(String direccion, double area, double valorBase, String modo, Propietario propietario) {

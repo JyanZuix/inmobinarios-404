@@ -44,8 +44,8 @@ public abstract class Propiedad implements Persistible {
     // (datos inválidos o dirección repetida) no queda en la lista del dueño.
     public Propiedad(String direccion, double area, double valorBase, String tipo, String modo,
                      Propietario propietario) {
-        // Se quitan espacios sobrantes (también los internos) para que "Calle 1  #2" y "Calle 1 #2" sean la misma.
-        this.direccion = direccion == null ? null : direccion.trim().replaceAll("\\s+", " ");
+        // Se normaliza la dirección para que "Calle 1  # 2-3" y "Calle 1 #2-3" sean la misma (ver normalizarDireccion).
+        this.direccion = normalizarDireccion(direccion);
         this.area = area;
         this.valorBase = valorBase;
         this.tipo = tipo == null ? null : tipo.trim();
@@ -60,8 +60,9 @@ public abstract class Propiedad implements Persistible {
     /**
      * Valida los datos de la propiedad (RF-01 / RNF-02).
      * Devuelve true si todo es correcto; si algo está mal LANZA una excepción que explica el problema.
+     * Es final porque el constructor lo llama: así ninguna hija puede cambiarlo antes de estar construida.
      */
-    public boolean validarDatos() {
+    public final boolean validarDatos() {
         if (direccion == null || direccion.isBlank()) {
             throw new IllegalArgumentException("La dirección de la propiedad es obligatoria.");
         }
@@ -133,6 +134,27 @@ public abstract class Propiedad implements Persistible {
     // Default (sin public): solo lo llama GestorInmuebles cuando una propiedad se registra con éxito.
     static void contarRegistro() {
         contadorPropiedades++;
+    }
+
+    // Lo llama GestorInmuebles.quitarPropiedad(): la propiedad quitada ya no cuenta como registrada.
+    static void descontarRegistro() {
+        contadorPropiedades--;
+    }
+
+    /**
+     * Deja una dirección en un formato único: sin espacios sobrantes y sin espacios alrededor de "#" y "-".
+     * Así "Calle 100  # 15 - 20" y "Calle 100 #15-20" se reconocen como la misma dirección (RF-01).
+     * Default (sin public): la usan el constructor y GestorInmuebles al buscar o comparar direcciones.
+     */
+    static String normalizarDireccion(String direccion) {
+        if (direccion == null) {
+            return null;
+        }
+        return direccion.trim()
+                .replaceAll("\\s+", " ")          // varios espacios seguidos → uno solo
+                .replaceAll("\\s*#\\s*", " #")    // "100#15", "100 # 15" → "100 #15"
+                .replaceAll("\\s*-\\s*", "-")     // "15 - 20" → "15-20"
+                .trim();
     }
 
     // ===================== Relaciones con otras clases (acceso default) =====================
@@ -217,13 +239,19 @@ public abstract class Propiedad implements Persistible {
             this.modo = registro[4];
             this.estado = registro[5];
             // registro[6] (documento del propietario) y registro[7] (número del contrato actual) son referencias
-            // a otros objetos: se reconectan cuando los gestores carguen todo el sistema (mejora futura).
+            // a otros objetos: las reconectan GestorInmuebles.cargarTodo() y GestorContratos.cargarTodo().
             validarDatos();
             aplicarDatosPropios(Arrays.copyOfRange(registro, 8, registro.length));
         } catch (RuntimeException e) {
             throw new IllegalStateException("El registro guardado de la propiedad '" + direccion
                     + "' está dañado: " + e.getMessage(), e);
         }
+    }
+
+    // Lo llama GestorInmuebles.quitarPropiedad(): borra el registro del archivo para que la propiedad
+    // quitada no vuelva a aparecer al reiniciar el sistema.
+    void eliminarDelArchivo() {
+        ArchivoPlano.eliminarRegistro(ARCHIVO, direccion);
     }
 
     // Cada hija agrega aquí sus campos propios al guardar y los lee al cargar (por defecto no hay ninguno).
@@ -246,6 +274,14 @@ public abstract class Propiedad implements Persistible {
     public Contrato getContratoActual() { return contratoActual; }
     public List<Contrato> getHistorial() { return Collections.unmodifiableList(historial); }
     public List<Interesado> getInteresados() { return Collections.unmodifiableList(interesados); }
+
+    /** Ficha de la propiedad para mostrarla en pantalla. Las hijas le agregan sus datos propios. */
+    @Override
+    public String toString() {
+        String valor = MODO_ARRIENDO.equals(modo) ? "canon " : "precio ";
+        return tipo + " | " + direccion + " | " + area + " m² | " + modo + ", " + valor + Utilidades.moneda(valorBase)
+                + " | estado: " + estado + " | dueño: " + propietario.getNombre();
+    }
 
     // ===================== Auxiliares privados =====================
 

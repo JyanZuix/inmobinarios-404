@@ -23,6 +23,11 @@ public class Apartamento extends Propiedad {
         return numHabitaciones;
     }
 
+    @Override
+    public String toString() {
+        return super.toString() + " | " + numHabitaciones + (numHabitaciones == 1 ? " habitación" : " habitaciones");
+    }
+
     // ---- Persistencia: campo propio de esta hija ----
     @Override
     protected String[] datosPropios() {

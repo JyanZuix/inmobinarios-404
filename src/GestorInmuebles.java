@@ -17,19 +17,26 @@ public class GestorInmuebles extends Gestor {
     /**
      * RF-01: registra una propiedad en el inventario.
      * No se permiten dos propiedades con la misma dirección (se ignoran mayúsculas y espacios sobrantes).
+     * Tampoco dos propietarios distintos con el mismo documento: al guardar, uno borraría al otro del archivo.
      * Si el registro es exitoso, completa el enlace inverso: la propiedad queda en la lista de su propietario.
      */
     public void agregarPropiedad(Propiedad propiedad) {
         if (propiedad == null) {
             throw new IllegalArgumentException("No se puede registrar una propiedad nula.");
         }
+        Propietario dueno = propiedad.getPropietario();
         for (Propiedad existente : inmuebles) {
             if (existente.getDireccion().equalsIgnoreCase(propiedad.getDireccion())) {
                 throw new IllegalArgumentException("Ya existe una propiedad registrada con la dirección '"
                         + propiedad.getDireccion() + "'. No se permiten dos propiedades con la misma dirección.");
             }
+            Propietario otro = existente.getPropietario();
+            if (otro != dueno && otro.getDocumento().equals(dueno.getDocumento())) {
+                throw new IllegalArgumentException("Ya hay un propietario registrado con el documento "
+                        + dueno.getDocumento() + " (" + otro.getNombre() + "). Use ese mismo propietario para "
+                        + "registrar la propiedad '" + propiedad.getDireccion() + "'.");
+            }
         }
-        Propietario dueno = propiedad.getPropietario();
         if (!dueno.getPropiedades().contains(propiedad)) {
             dueno.agregarPropiedad(propiedad);
         }
@@ -41,10 +48,42 @@ public class GestorInmuebles extends Gestor {
         throw new UnsupportedOperationException("Pendiente: RF-13");
     }
 
-    /** Devuelve la propiedad registrada con esa dirección (sin importar mayúsculas), o null si no existe. */
+    /**
+     * Quita una propiedad del inventario, por ejemplo si se registró por error. Solo se permite si nunca ha
+     * tenido contratos ni interesados: si no, se perderían el historial y las relaciones guardadas en los
+     * archivos. También la quita de la lista de su propietario, del contador y del archivo.
+     */
+    public void quitarPropiedad(String direccion) {
+        Propiedad propiedad = buscarPropiedad(direccion);
+        if (propiedad == null) {
+            throw new IllegalArgumentException("No hay ninguna propiedad registrada con la dirección '" + direccion + "'.");
+        }
+        if (propiedad.getContratoActual() != null) {
+            throw new IllegalStateException("No se puede quitar la propiedad '" + propiedad.getDireccion()
+                    + "': tiene un contrato vigente (N° " + propiedad.getContratoActual().getNumeroContrato() + ").");
+        }
+        if (!propiedad.getHistorial().isEmpty()) {
+            throw new IllegalStateException("No se puede quitar la propiedad '" + propiedad.getDireccion()
+                    + "': tiene contratos en su historial y se perderían.");
+        }
+        if (!propiedad.getInteresados().isEmpty()) {
+            throw new IllegalStateException("No se puede quitar la propiedad '" + propiedad.getDireccion()
+                    + "': tiene " + propiedad.getInteresados().size() + " interesado(s) asociado(s).");
+        }
+        inmuebles.remove(propiedad);
+        propiedad.getPropietario().quitarPropiedad(propiedad);
+        Propiedad.descontarRegistro();
+        propiedad.eliminarDelArchivo();
+    }
+
+    /**
+     * Devuelve la propiedad registrada con esa dirección, o null si no existe. No importan las mayúsculas ni los
+     * espacios sobrantes: la dirección buscada se normaliza igual que al registrarla.
+     */
     public Propiedad buscarPropiedad(String direccion) {
+        String buscada = Propiedad.normalizarDireccion(direccion);
         for (Propiedad propiedad : inmuebles) {
-            if (propiedad.getDireccion().equalsIgnoreCase(direccion)) {
+            if (propiedad.getDireccion().equalsIgnoreCase(buscada)) {
                 return propiedad;
             }
         }

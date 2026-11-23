@@ -53,6 +53,23 @@ final class ArchivoPlano {
         }
     }
 
+    /** Borra el registro con esa clave (campos[0]). Si el archivo o el registro no existen, no hace nada. */
+    static void eliminarRegistro(String archivo, String clave) {
+        Path ruta = CARPETA.resolve(archivo);
+        if (!Files.exists(ruta)) {
+            return;
+        }
+        try {
+            String claveEscapada = escapar(clave);
+            List<String> lineas = new ArrayList<>(Files.readAllLines(ruta, StandardCharsets.UTF_8));
+            if (lineas.removeIf(linea -> claveDe(linea).equals(claveEscapada))) {
+                Files.write(ruta, lineas, StandardCharsets.UTF_8);
+            }
+        } catch (IOException e) {
+            throw new UncheckedIOException("No se pudo borrar del archivo '" + archivo + "': " + e.getMessage(), e);
+        }
+    }
+
     /** Devuelve los campos del registro con esa clave, o null si no existe. */
     static String[] buscarRegistro(String archivo, String clave) {
         Path ruta = CARPETA.resolve(archivo);

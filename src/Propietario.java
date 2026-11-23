@@ -6,7 +6,7 @@ import java.util.List;
  * Propietario del inmueble (el agente gestiona inmuebles de varios dueños).
  * Una propiedad se relaciona con otras SOLO a través de su dueño: un propietario tiene 0..* propiedades
  * y cada propiedad pertenece a un único propietario.
- * Solo está lo mínimo para RF-01; el resto queda para sus requerimientos.
+ * Se registra junto con sus propiedades (RF-01) y se guarda en propietarios.txt (RNF-01).
  */
 public class Propietario implements Persistible {
 
@@ -18,18 +18,13 @@ public class Propietario implements Persistible {
     private final List<Propiedad> propiedades = new ArrayList<>();
 
     public Propietario(String documento, String nombre, String contacto) {
-        if (documento == null || documento.isBlank()) {
-            throw new IllegalArgumentException("El documento del propietario es obligatorio.");
-        }
+        // "100.200.300" y "100200300" son el mismo documento: se guarda solo con números.
+        this.documento = Utilidades.normalizarDocumento(documento, "propietario");
         if (nombre == null || nombre.isBlank()) {
             throw new IllegalArgumentException("El nombre del propietario es obligatorio.");
         }
-        if (contacto == null || contacto.isBlank()) {
-            throw new IllegalArgumentException("El contacto del propietario es obligatorio.");
-        }
-        this.documento = documento.trim();
         this.nombre = nombre.trim();
-        this.contacto = contacto.trim();
+        this.contacto = Utilidades.validarContacto(contacto); // teléfono o correo
     }
 
     /**
@@ -48,11 +43,13 @@ public class Propietario implements Persistible {
         propiedades.add(propiedad);
     }
 
+    // Lo llama GestorInmuebles.quitarPropiedad(): la propiedad quitada deja de estar en la lista del dueño.
+    void quitarPropiedad(Propiedad propiedad) {
+        propiedades.remove(propiedad);
+    }
+
     public void actualizarContacto(String nuevoContacto) {
-        if (nuevoContacto == null || nuevoContacto.isBlank()) {
-            throw new IllegalArgumentException("El contacto del propietario no puede quedar vacío.");
-        }
-        this.contacto = nuevoContacto.trim();
+        this.contacto = Utilidades.validarContacto(nuevoContacto);
     }
 
     public String getDocumento() { return documento; }
