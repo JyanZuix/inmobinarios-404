@@ -19,7 +19,27 @@ public abstract class Gestor {
         for (Persistible elemento : elementosPersistibles()) {
             elemento.guardar();
         }
+        // RF-21 tambien se guardan las notificasiones con su estado
+        for (Notificacion n : notificaciones) {
+            n.guardar();
+        }
     }
+
+    // RF-21 al arrancar se traen las notificaciones guardadas, incluidas las atendidas para que no se dupliquen.
+    // todas van en el mismo archivo, cada gestor solo toma las que son suyas segun el origen
+    public void cargarNotificaciones() {
+        List<Notificacion> leidas = new ArrayList<>();
+        for (String[] r : ArchivoPlano.leerTodos(Notificacion.ARCHIVO)) {
+            Notificacion n = Notificacion.desdeRegistro(r);
+            if (esMiNotificacion(n)) {
+                leidas.add(n);
+            }
+        }
+        agregarNotificaciones(leidas);
+    }
+
+    // cada hijo dice que origenes le perteneceen (PAGO:, CONTRATO:, ...)
+    protected abstract boolean esMiNotificacion(Notificacion n);
 
     /**
      * Cada hijo entrega los objetos que hay que guardar. Como una Propiedad (o un Cliente, o un Contrato)
@@ -54,8 +74,15 @@ public abstract class Gestor {
         }
     }
 
+    // RF-20 solo las que no estan atendidas
     public List<Notificacion> listarNotificacionesPendientes() {
-        throw new UnsupportedOperationException("Pendiente: RF-20");
+        List<Notificacion> pendientes = new ArrayList<>();
+        for (Notificacion n : notificaciones) {
+            if (!n.estaAtendida()) {
+                pendientes.add(n);
+            }
+        }
+        return pendientes;
     }
 
     public List<Notificacion> getNotificaciones() {

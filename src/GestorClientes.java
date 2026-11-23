@@ -118,4 +118,9 @@ public class GestorClientes extends Gestor {
             agregarNotificaciones(cliente.generarNotificaciones(hoy));
         }
     }
+
+    @Override
+    protected boolean esMiNotificacion(Notificacion n) {
+        return n.getIdOrigen().startsWith("CLIENTE:");
+    }
 }

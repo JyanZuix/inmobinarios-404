@@ -201,4 +201,9 @@ public class GestorContratos extends Gestor {
             contrato.generarCuotasHasta(fecha);
         }
     }
+
+    @Override
+    protected boolean esMiNotificacion(Notificacion n) {
+        return n.getIdOrigen().startsWith("PAGO:") || n.getIdOrigen().startsWith("CONTRATO:");
+    }
 }

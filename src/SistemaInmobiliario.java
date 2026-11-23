@@ -1,4 +1,6 @@
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -36,6 +38,7 @@ public class SistemaInmobiliario {
     public void cargarTodo() {
         for (Gestor gestor : gestores) {
             gestor.cargarTodo();
+            gestor.cargarNotificaciones(); // RF-21 tambien el estado de los avisos
         }
     }
 
@@ -53,7 +56,19 @@ public class SistemaInmobiliario {
 
     /** RF-20: notificaciones pendientes de todos los gestores, ordenadas por fecha del evento. */
     public List<Notificacion> listarNotificacionesPendientes() {
-        throw new UnsupportedOperationException("Pendiente: RF-20");
+        List<Notificacion> pendientes = new ArrayList<>();
+        for (Gestor gestor : gestores) {
+            pendientes.addAll(gestor.listarNotificacionesPendientes());
+        }
+        // se ordenan por la fecha del evento, la mas vieja primero
+        pendientes.sort(Comparator.comparing(Notificacion::getFechaEvento));
+        return pendientes;
+    }
+
+    /** RF-21: marca la notificacion como atendida y guarda para que no se pierda al reiniciar. */
+    public void marcarNotificacionAtendida(Notificacion notificacion) {
+        notificacion.marcarAtendida();
+        notificacion.guardar();
     }
 
     // ===================== Getters =====================

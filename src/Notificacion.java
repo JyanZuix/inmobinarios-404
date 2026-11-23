@@ -15,6 +15,8 @@ public class Notificacion implements Persistible {
     public static final String CLIENTE_CONTRATO_POR_VENCER = "CLIENTE_CONTRATO_POR_VENCER"; // RF-19
     public static final String CLIENTE_PAGOS_EN_MORA = "CLIENTE_PAGOS_EN_MORA";             // RF-19
 
+    public static final String ARCHIVO = "notificaciones.txt";
+
     private String tipo;
     private String mensaje;
     private LocalDate fechaEvento; // fecha del hecho que se avisa (fecha límite, fin del contrato, cita...)
@@ -36,8 +38,9 @@ public class Notificacion implements Persistible {
         this.atendida = false;
     }
 
+    // RF-21 marca el aviso como atendido y asi ya no sale en las pendeintes
     public void marcarAtendida() {
-        // Pendiente: RF-21
+        atendida = true;
     }
 
     public boolean estaAtendida() {
@@ -55,14 +58,33 @@ public class Notificacion implements Persistible {
                 && fechaEvento.equals(otra.fechaEvento);
     }
 
-    @Override
-    public void guardar() {
-        // Pendiente: RNF-01
+    // clave del registro, tipo + origen + fecha porque eso es lo que la hace unica
+    public String clave() {
+        return tipo + ":" + idOrigen + ":" + fechaEvento;
     }
 
+    // RF-21 se guarda en notificaciones.txt con el estado atendida, asi al reinicar no vuelve
+    @Override
+    public void guardar() {
+        String[] campos = {clave(), tipo, mensaje, fechaEvento.toString(), idOrigen, String.valueOf(atendida)};
+        ArchivoPlano.guardarRegistro(ARCHIVO, campos);
+    }
+
+    // lee otra vez el registro y recupera mensaje y si ya estaba atendida
     @Override
     public void cargar() {
-        // Pendiente: RNF-01
+        String[] r = ArchivoPlano.buscarRegistro(ARCHIVO, clave());
+        if (r != null) {
+            mensaje = r[2];
+            atendida = Boolean.parseBoolean(r[5]);
+        }
+    }
+
+    // crea la notificacion desde una linea del archvio
+    public static Notificacion desdeRegistro(String[] r) {
+        Notificacion n = new Notificacion(r[1], r[2], LocalDate.parse(r[3]), r[4]);
+        n.atendida = Boolean.parseBoolean(r[5]);
+        return n;
     }
 
     public String getTipo() {

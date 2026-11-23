@@ -172,4 +172,9 @@ public class GestorInmuebles extends Gestor {
         }
         return interesados;
     }
+
+    @Override
+    protected boolean esMiNotificacion(Notificacion n) {
+        return n.getIdOrigen().startsWith("INTERESADO:");
+    }
 }
