@@ -94,6 +94,19 @@ public abstract class Persona implements Persistible, Notificable {
         ArchivoPlano.guardarRegistro(ARCHIVO_SEGUIMIENTOS, campos);
     }
 
+    /** Restaura las fechas de una persona, incluso al volver a cargar la misma instancia. */
+    protected void cargarSeguimientos(String clave) {
+        String[] campos = ArchivoPlano.buscarRegistro(ARCHIVO_SEGUIMIENTOS, clave);
+        List<LocalDate> guardadas = new ArrayList<>();
+        if (campos != null) {
+            for (int i = 1; i < campos.length; i++) {
+                guardadas.add(LocalDate.parse(campos[i]));
+            }
+        }
+        fechasSeguimiento.clear();
+        fechasSeguimiento.addAll(guardadas);
+    }
+
     public String getNombre() {
         return nombre;
     }

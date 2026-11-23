@@ -1,7 +1,8 @@
 import java.time.LocalDate;
+import java.util.List;
 
 /**
- * Demostración de RF-01 (registrar propiedad), RF-02 (registrar arrendatario) y RF-03 (crear contrato).
+ * Demostración de los requisitos implementados con datos de ejemplo.
  * Cada caso con error imprime el mensaje de la excepción, tal como lo vería quien opera el sistema.
  */
 public class Main {
@@ -141,9 +142,29 @@ public class Main {
         intentar(() -> c3.agregarPago(new Pago(1, LocalDate.of(2027, 3, 5), null, "2027-03", 0, "pendiente"))); // id repetido
         intentar(() -> sinCrear.agregarPago(new Pago(1, LocalDate.of(2026, 12, 5), null, "2026-12", 0, "pendiente")));
 
+        // ---------- RF-09: contratos con pagos en mora ----------
+        titulo("RF-09: contratos con pagos en mora");
+        LocalDate diaRevision = LocalDate.of(2027, 1, 30);
+        intentar(() -> {
+            for (Contrato contrato : gestorContratos.filtrarContratosEnMora(diaRevision)) {
+                System.out.println("Contrato " + contrato.getNumeroContrato() + " | "
+                        + contrato.getPropiedad().getDireccion() + " | pago vencido desde "
+                        + contrato.moraDesde(diaRevision));
+            }
+        });
+
+        // ---------- RF-11: registrar interesados ----------
+        titulo("RF-11: registrar interesados");
+        Interesado sofia = gestorInmuebles.registrarInteresado("Sofía Ruiz", "3125550000",
+                List.of(aptoVenta, apto2));
+        System.out.println(sofia.getNombre() + " está asociada a " + sofia.getInmuebles().size() + " inmuebles.");
+        intentar(() -> gestorInmuebles.registrarInteresado("Sin inmueble", "3125550001", List.of()));
+        intentar(() -> gestorInmuebles.registrarInteresado("Sin contacto", "", List.of(apto)));
+        intentar(() -> gestorInmuebles.registrarInteresado("Fuera del inventario", "3125550002",
+                List.of(apto, noRegistrado)));
+
         // ---------- RF-12: fechas de seguimiento ----------
         titulo("RF-12: fechas de seguimiento");
-        Interesado sofia = new Interesado("Sofía Ruiz", "3125550000");
         intentar(() -> {
             // Se registran en desorden y con una fecha ya pasada, que no debe salir como pendiente.
             sofia.registrarSeguimiento(hoy.minusDays(5));
@@ -163,7 +184,6 @@ public class Main {
 
         // ---------- RF-16: avisos de pagos en mora o por vencer ----------
         titulo("RF-16: pagos en mora o por vencer");
-        LocalDate diaRevision = LocalDate.of(2027, 1, 30); // fecha de referencia fija para la demostración
         intentar(() -> {
             // El sistema crea las cuotas que falten hasta dentro de 7 días y recolecta los avisos.
             sistema.recolectarNotificaciones(diaRevision);
@@ -196,14 +216,11 @@ public class Main {
         titulo("RF-18: seguimientos de interesados");
         intentar(() -> {
             // Sofía (RF-12) se interesa en dos propiedades; sus citas: 2026-11-16 (vencida), hoy, +2 y +10 días.
-            aptoVenta.agregarInteresado(sofia);
-            apto2.agregarInteresado(sofia);
             sistema.recolectarNotificaciones(hoy);
             System.out.println("Avisos de interesados al " + hoy + " (las citas futuras no avisan; cada cita una vez,"
                     + " aunque Sofía esté en dos propiedades):");
             imprimirAvisos(gestorInmuebles, "INTERESADO:");
         });
-        intentar(() -> apto2.agregarInteresado(sofia)); // ya es interesada en esta propiedad
 
         // ---------- RF-19: avisos de los clientes ----------
         titulo("RF-19: seguimientos y situación contractual de los clientes");
@@ -220,12 +237,25 @@ public class Main {
                     + gestorClientes.getNotificaciones().size() + ".");
         });
 
+        // ---------- RF-10: terminar un contrato y liberar la propiedad ----------
+        titulo("RF-10: terminar un contrato y liberar la propiedad");
+        intentar(() -> {
+            c1.terminarContrato();
+            System.out.println("Contrato " + c1.getNumeroContrato() + ": " + c1.getEstado()
+                    + " | inmueble: " + apto.getEstado() + " | contrato actual: " + apto.getContratoActual());
+            System.out.println("El contrato se conserva en ambos historiales: "
+                    + (apto.getHistorial().contains(c1) && ana.getHistorial().contains(c1)));
+            System.out.println("El contrato aparece en mora después de cerrarlo: "
+                    + gestorContratos.filtrarContratosEnMora(diaRevision).contains(c1));
+        });
+        intentar(c1::terminarContrato); // ya finalizado
+
         // ---------- Persistencia (RNF-01) ----------
         titulo("Persistencia");
         intentar(() -> {
             sistema.guardarTodo(); // cada gestor guarda lo suyo (contratos de arriendo guardan también sus pagos)
             for (String archivo : new String[]{"propietarios.txt", "propiedades.txt", "clientes.txt",
-                    "seguimientos.txt", "contratos.txt", "pagos.txt"}) {
+                    "interesados.txt", "seguimientos.txt", "contratos.txt", "pagos.txt"}) {
                 System.out.println("datos/" + archivo + ": " + contarLineas(archivo) + " registros");
             }
         });
@@ -253,6 +283,13 @@ public class Main {
             System.out.println(anaCargada.getNombre() + " tiene " + anaCargada.getContratosVigentes().size()
                     + " contratos vigentes; citas de " + luisCargado.getNombre() + ": "
                     + luisCargado.consultarSeguimientos(hoy));
+
+            Propiedad aptoCargado = recargado.getGestorInmuebles().buscarPropiedad(apto.getDireccion());
+            System.out.println("Inmueble liberado tras recargar: " + aptoCargado.getEstado());
+            for (Interesado interesado : recargado.getGestorInmuebles().getInteresados()) {
+                System.out.println(interesado.getNombre() + ": " + interesado.getInmuebles().size()
+                        + " inmuebles y citas " + interesado.consultarSeguimientos(hoy));
+            }
         });
     }
 

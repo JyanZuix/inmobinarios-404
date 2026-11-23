@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Gestor del inventario de inmuebles del agente.
@@ -36,33 +37,9 @@ public class GestorInmuebles extends Gestor {
         Propiedad.contarRegistro(); // suma al contador estático de propiedades registradas
     }
 
-        /**
-     * RF-13: consulta los inmuebles disponibles según la modalidad ("Arriendo" o "Venta").
-     */
     public List<Propiedad> listarDisponibles(String modalidad) {
-        if (modalidad == null || modalidad.isBlank()) {
-            throw new IllegalArgumentException("La modalidad es obligatoria para consultar inmuebles disponibles.");
-        }
-        String modalidadNormalizada = modalidad.trim();
-        if (Propiedad.MODO_ARRIENDO.equalsIgnoreCase(modalidadNormalizada)) {
-            modalidadNormalizada = Propiedad.MODO_ARRIENDO;
-        } else if (Propiedad.MODO_VENTA.equalsIgnoreCase(modalidadNormalizada)) {
-            modalidadNormalizada = Propiedad.MODO_VENTA;
-        } else {
-            throw new IllegalArgumentException("Modalidad no válida: '" + modalidad
-                    + "'. Debe ser '" + Propiedad.MODO_ARRIENDO + "' o '" + Propiedad.MODO_VENTA + "'.");
-        }
-
-        List<Propiedad> resultado = new ArrayList<>();
-        for (Propiedad propiedad : inmuebles) {
-            if (Propiedad.DISPONIBLE.equalsIgnoreCase(propiedad.getEstado())
-                    && modalidadNormalizada.equalsIgnoreCase(propiedad.getModo())) {
-                resultado.add(propiedad);
-            }
-        }
-        return resultado;
+        throw new UnsupportedOperationException("Pendiente: RF-13");
     }
-
 
     /** Devuelve la propiedad registrada con esa dirección (sin importar mayúsculas), o null si no existe. */
     public Propiedad buscarPropiedad(String direccion) {
@@ -78,9 +55,28 @@ public class GestorInmuebles extends Gestor {
         return Collections.unmodifiableList(inmuebles);
     }
 
+    /** RF-11: valida el inventario antes de enlazar al interesado a todas sus propiedades. */
+    public Interesado registrarInteresado(String nombre, String contacto, List<Propiedad> propiedades) {
+        Interesado interesado = new Interesado(nombre, contacto, propiedades);
+        for (Propiedad propiedad : interesado.getInmuebles()) {
+            if (!inmuebles.contains(propiedad)) {
+                throw new IllegalArgumentException("La propiedad '" + propiedad.getDireccion()
+                        + "' no está registrada en el inventario.");
+            }
+        }
+        enlazarInteresado(interesado);
+        return interesado;
+    }
+
+    private void enlazarInteresado(Interesado interesado) {
+        for (Propiedad propiedad : interesado.getInmuebles()) {
+            propiedad.agregarInteresado(interesado);
+        }
+    }
+
     // ===================== Lo que exige la clase padre Gestor =====================
 
-    /** Las propiedades y, una sola vez cada uno, sus propietarios (un dueño puede tener varias propiedades). */
+    /** Las propiedades, sus propietarios y sus interesados. Cada persona se guarda una sola vez. */
     @Override
     protected List<Persistible> elementosPersistibles() {
         List<Persistible> elementos = new ArrayList<>(inmuebles);
@@ -91,6 +87,7 @@ public class GestorInmuebles extends Gestor {
             }
         }
         elementos.addAll(propietarios);
+        elementos.addAll(getInteresados());
         return elementos;
     }
 
@@ -119,6 +116,23 @@ public class GestorInmuebles extends Gestor {
             }
         }
         // El contrato actual (r[7]) lo reconecta GestorContratos al cargar los contratos.
+        for (String[] r : ArchivoPlano.leerTodos(Interesado.ARCHIVO)) {
+            try {
+                List<Propiedad> propiedades = new ArrayList<>();
+                for (int i = 3; i < r.length; i++) {
+                    Propiedad propiedad = buscarPropiedad(r[i]);
+                    if (propiedad == null) {
+                        throw new IllegalArgumentException("no existe la propiedad '" + r[i] + "'");
+                    }
+                    propiedades.add(propiedad);
+                }
+                Interesado interesado = new Interesado(UUID.fromString(r[0]), r[1], r[2], propiedades);
+                interesado.cargarSeguimientosGuardados();
+                enlazarInteresado(interesado);
+            } catch (RuntimeException e) {
+                throw new IllegalStateException("No se pudo cargar el interesado " + r[0] + ": " + e.getMessage(), e);
+            }
+        }
     }
 
     // Fábrica: el único lugar del sistema que pregunta el tipo de propiedad, porque al leer un texto hay que
@@ -141,8 +155,13 @@ public class GestorInmuebles extends Gestor {
 
     @Override
     public void recolectarNotificaciones(LocalDate hoy) {
-        // RF-18: los interesados de todas las propiedades, cada uno una sola vez (uno puede estar interesado en
-        // varias propiedades y no debe avisar dos veces la misma cita).
+        for (Interesado interesado : getInteresados()) {
+            agregarNotificaciones(interesado.generarNotificaciones(hoy));
+        }
+    }
+
+    /** Devuelve cada interesado una vez, incluso si está vinculado a varias propiedades. */
+    public List<Interesado> getInteresados() {
         List<Interesado> interesados = new ArrayList<>();
         for (Propiedad propiedad : inmuebles) {
             for (Interesado interesado : propiedad.getInteresados()) {
@@ -151,8 +170,6 @@ public class GestorInmuebles extends Gestor {
                 }
             }
         }
-        for (Interesado interesado : interesados) {
-            agregarNotificaciones(interesado.generarNotificaciones(hoy));
-        }
+        return interesados;
     }
 }

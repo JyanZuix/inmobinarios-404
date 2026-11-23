@@ -106,8 +106,13 @@ public abstract class Contrato implements Persistible, Notificable {
         cliente.asignarContrato(this);                             // historial del cliente
     }
 
+    /** RF-10: libera la propiedad y conserva el contrato en ambos historiales. */
     public void terminarContrato() {
-        // Pendiente: RF-10 (estado "finalizado" y liberar la propiedad y el cliente)
+        if (!ACTIVO.equals(estado)) {
+            throw new IllegalStateException("Solo se puede terminar un contrato activo.");
+        }
+        propiedad.liberarContrato(this);
+        estado = FINALIZADO;
     }
 
     /** Polimorfismo: cada tipo de contrato calcula su monto final a su manera. */
@@ -122,7 +127,7 @@ public abstract class Contrato implements Persistible, Notificable {
         return ++contadorContratos;
     }
 
-    /** RF-19: true si el contrato tiene algún pago en mora a la fecha dada. Servirá también a RF-09. */
+    /** RF-09 y RF-19: true si el contrato tiene algún pago en mora a la fecha dada. */
     public boolean tienePagosVencidos(LocalDate hoy) {
         return moraDesde(hoy) != null;
     }

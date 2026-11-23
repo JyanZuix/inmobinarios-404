@@ -49,11 +49,30 @@ public class GestorContratos extends Gestor {
     }
 
     public List<Contrato> filtrarContratosEnMora() {
-        throw new UnsupportedOperationException("Pendiente: RF-09");
+        return filtrarContratosEnMora(LocalDate.now());
     }
 
     public void verificarPagosVencidos() {
-        // Pendiente: RF-09
+        verificarPagosVencidos(LocalDate.now());
+    }
+
+    /** RF-09: incluye contratos activos con al menos una cuota vencida y sin pagar. */
+    public List<Contrato> filtrarContratosEnMora(LocalDate hoy) {
+        verificarPagosVencidos(hoy);
+        List<Contrato> enMora = new ArrayList<>();
+        for (Contrato contrato : contratos) {
+            if (Contrato.ACTIVO.equals(contrato.getEstado()) && contrato.tienePagosVencidos(hoy)) {
+                enMora.add(contrato);
+            }
+        }
+        return enMora;
+    }
+
+    private void verificarPagosVencidos(LocalDate hoy) {
+        if (hoy == null) {
+            throw new IllegalArgumentException("La fecha de consulta es obligatoria.");
+        }
+        generarCuotasHasta(hoy);
     }
 
     public List<Contrato> listarContratosPorVencer(int dias) {

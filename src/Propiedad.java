@@ -33,7 +33,7 @@ public abstract class Propiedad implements Persistible {
     protected String estado;
     protected Propietario propietario;      // dueño del inmueble (lo recibe el constructor)
     protected Contrato contratoActual;      // contrato vigente (0..1)
-    protected List<Interesado> interesados = new ArrayList<>(); // AQUÍ VA RF-11: registrar interesados
+    private final List<Interesado> interesados = new ArrayList<>();
 
     // Historial de todos los contratos que ha tenido la propiedad (0..*)
     private final List<Contrato> historial = new ArrayList<>();
@@ -111,11 +111,8 @@ public abstract class Propiedad implements Persistible {
      */
     public abstract double calcularDepositoGarantia();
 
-    /**
-     * Asocia un interesado a la propiedad (mínimo de RF-11, necesario para RF-18).
-     * Pendiente de RF-11: que un interesado no pueda existir sin al menos un inmueble, y su persistencia.
-     */
-    public void agregarInteresado(Interesado interesado) {
+    /** RF-11: enlaza al interesado cuando se registra o se restaura desde archivo. */
+    void agregarInteresado(Interesado interesado) {
         if (interesado == null) {
             throw new IllegalArgumentException("No se puede agregar un interesado nulo.");
         }
@@ -157,8 +154,12 @@ public abstract class Propiedad implements Persistible {
         this.estado = nuevoEstado;
     }
 
-    void liberarContrato() {
-        // Pendiente: RF-10 (contratoActual = null y estado disponible al terminar un contrato)
+    void liberarContrato(Contrato contrato) {
+        if (contratoActual != contrato) {
+            throw new IllegalStateException("El contrato no es el vigente de la propiedad '" + direccion + "'.");
+        }
+        contratoActual = null;
+        estado = DISPONIBLE;
     }
 
     // ---- Solo para recrear el sistema desde archivo (los llama la persistencia, nunca el agente) ----
