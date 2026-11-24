@@ -106,13 +106,46 @@ public abstract class Contrato implements Persistible, Notificable {
         cliente.asignarContrato(this);                             // historial del cliente
     }
 
-    /** RF-10: libera la propiedad y conserva el contrato en ambos historiales. */
+    /** RF-10 con la fecha de hoy (atajo para el uso real del sistema). */
     public void terminarContrato() {
+        terminarContrato(LocalDate.now());
+    }
+
+    /**
+     * RF-10: termina el contrato en la fecha dada y conserva el contrato en ambos historiales.
+     * Si termina antes de lo previsto, la fecha de fin pasa a ser la fecha real de terminación.
+     * La propiedad queda en el estado que corresponde al tipo de contrato (estadoPropiedadAlTerminar()):
+     * un arriendo la deja disponible; una venta cerrada la deja finalizada (ya no se puede volver a ofrecer).
+     */
+    public void terminarContrato(LocalDate fecha) {
+        finalizar(fecha, estadoPropiedadAlTerminar());
+    }
+
+    // Lo común a terminar un contrato y a cancelar una venta (ContratoVenta.cancelarVenta).
+    protected void finalizar(LocalDate fecha, String estadoPropiedad) {
         if (!ACTIVO.equals(estado)) {
             throw new IllegalStateException("Solo se puede terminar un contrato activo.");
         }
-        propiedad.liberarContrato(this);
+        if (fecha == null || !fecha.isAfter(fechaInicio)) {
+            throw new IllegalArgumentException("La fecha de terminación (" + fecha + ") debe ser posterior al inicio "
+                    + "del contrato (" + fechaInicio + ").");
+        }
+        alTerminar(fecha);
+        if (fecha.isBefore(fechaFin)) {
+            fechaFin = fecha; // terminó antes de lo previsto
+        }
+        propiedad.liberarContrato(this, estadoPropiedad);
         estado = FINALIZADO;
+    }
+
+    /** Lo que cada tipo de contrato hace al terminar (por defecto nada; ContratoArriendo quita cuotas futuras). */
+    protected void alTerminar(LocalDate fecha) {
+        // Sin acciones por defecto.
+    }
+
+    /** Estado en que queda la propiedad al terminar el contrato. Por defecto vuelve a estar disponible. */
+    protected String estadoPropiedadAlTerminar() {
+        return Propiedad.DISPONIBLE;
     }
 
     /** Polimorfismo: cada tipo de contrato calcula su monto final a su manera. */

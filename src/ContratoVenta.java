@@ -53,6 +53,20 @@ public class ContratoVenta extends Contrato {
         return Propiedad.FINALIZADO;
     }
 
+    /** RF-10: terminar una venta es cerrarla: la propiedad queda vendida ("finalizado") y no se vuelve a ofrecer. */
+    @Override
+    protected String estadoPropiedadAlTerminar() {
+        return Propiedad.FINALIZADO;
+    }
+
+    /**
+     * RF-10: la venta no se concretó (el comprador desistió, no hubo financiamiento...). El contrato queda
+     * finalizado y la propiedad vuelve a estar disponible para ofrecerla de nuevo.
+     */
+    public void cancelarVenta(LocalDate fecha) {
+        finalizar(fecha, Propiedad.DISPONIBLE);
+    }
+
     @Override
     public String toString() {
         return super.toString() + " | cuota inicial: " + Utilidades.moneda(cuotaInicial) + " | saldo financiado: "

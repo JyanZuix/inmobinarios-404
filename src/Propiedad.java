@@ -98,6 +98,10 @@ public abstract class Propiedad implements Persistible {
             throw new IllegalStateException("La propiedad '" + direccion + "' tiene un contrato vigente (N° "
                     + contratoActual.getNumeroContrato() + "); se libera al terminar el contrato.");
         }
+        if (FINALIZADO.equals(estado)) {
+            throw new IllegalStateException("La propiedad '" + direccion + "' ya fue vendida (estado: " + FINALIZADO
+                    + "); no se puede volver a ofrecer.");
+        }
         String normalizado = nuevoEstado == null ? null : nuevoEstado.trim().toLowerCase();
         if (!DISPONIBLE.equals(normalizado) && !EN_CAPTACION.equals(normalizado)) {
             throw new IllegalArgumentException("Estado inválido: '" + nuevoEstado + "'. Manualmente solo se puede "
@@ -176,12 +180,14 @@ public abstract class Propiedad implements Persistible {
         this.estado = nuevoEstado;
     }
 
-    void liberarContrato(Contrato contrato) {
+    // Lo llama Contrato al terminar (RF-10): la propiedad queda sin contrato vigente y en el estado que diga el
+    // contrato (disponible tras un arriendo o una venta cancelada; finalizado tras una venta cerrada).
+    void liberarContrato(Contrato contrato, String nuevoEstado) {
         if (contratoActual != contrato) {
             throw new IllegalStateException("El contrato no es el vigente de la propiedad '" + direccion + "'.");
         }
         contratoActual = null;
-        estado = DISPONIBLE;
+        estado = nuevoEstado;
     }
 
     // ---- Solo para recrear el sistema desde archivo (los llama la persistencia, nunca el agente) ----

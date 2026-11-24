@@ -315,10 +315,15 @@ public class Main {
 
         // ---------- RF-10: terminar un contrato y liberar la propiedad ----------
         titulo("RF-10: terminar un contrato y liberar la propiedad");
+        LocalDate fechaTerminacion = LocalDate.of(2027, 3, 1); // Ana entrega el apartamento antes de lo previsto
         intentar(() -> {
-            c1.terminarContrato();
+            int cuotasAntes = c1.listarPagos().size();
+            c1.terminarContrato(fechaTerminacion);
             System.out.println("Contrato " + c1.getNumeroContrato() + ": " + c1.getEstado()
                     + " | inmueble: " + apto.getEstado() + " | contrato actual: " + apto.getContratoActual());
+            System.out.println("Fecha de fin ajustada a la terminación: " + c1.getFechaFin()
+                    + " | cuotas: " + cuotasAntes + " -> " + c1.listarPagos().size()
+                    + " (se quitan las pendientes desde el " + fechaTerminacion + "; las anteriores se siguen debiendo)");
             System.out.println("El contrato se conserva en ambos historiales: "
                     + (apto.getHistorial().contains(c1) && ana.getHistorial().contains(c1)));
             System.out.println("El contrato aparece en mora después de cerrarlo: "
@@ -326,7 +331,24 @@ public class Main {
             System.out.println("RF-13 después de liberar el inmueble:");
             imprimirDisponibles(gestorInmuebles);
         });
-        intentar(c1::terminarContrato); // ya finalizado
+        intentar(() -> c1.terminarContrato(fechaTerminacion)); // ya finalizado
+        intentar(() -> c3.terminarContrato(hoy));              // fecha igual al inicio: no es válida
+
+        // Venta: cerrarla deja el inmueble vendido; cancelarla lo vuelve a ofrecer.
+        intentar(() -> {
+            cv.terminarContrato(LocalDate.of(2027, 1, 21));
+            System.out.println("Venta " + cv.getNumeroContrato() + " cerrada: inmueble '" + aptoVenta.getEstado() + "'");
+        });
+        intentar(() -> aptoVenta.cambiarEstado("disponible")); // un inmueble vendido no se vuelve a ofrecer
+        intentar(() -> {
+            Apartamento otraVenta = new Apartamento("Calle 60 #20-30 Apto 201", 70, 280_000_000, "Venta", dueno, 2);
+            gestorInmuebles.agregarPropiedad(otraVenta);
+            ContratoVenta desistida = new ContratoVenta(otraVenta, marta, hoy, hoy.plusMonths(3), 50_000_000);
+            gestorContratos.agregarContrato(desistida);
+            desistida.cancelarVenta(hoy.plusMonths(1));
+            System.out.println("Venta " + desistida.getNumeroContrato() + " cancelada: inmueble '" + otraVenta.getEstado()
+                    + "' (vuelve a ofrecerse)");
+        });
 
         // ---------- Persistencia (RNF-01) ----------
         titulo("Persistencia");

@@ -35,7 +35,10 @@ public class ContratoArriendo extends Contrato {
                             double canonActual, double porcentajeIncremento, LocalDate ultimaFechaActualizacion) {
         super(numeroContrato, propiedad, cliente, fechaInicio, fechaFin, estado);
         validarModo(propiedad);
-        validarDuracion(fechaInicio, fechaFin);
+        if (ACTIVO.equals(estado)) {
+            // Un contrato terminado antes de tiempo (RF-10) puede haber durado menos de un mes.
+            validarDuracion(fechaInicio, fechaFin);
+        }
         validarPorcentaje(porcentajeIncremento);
         if (!(canonActual > 0) || Double.isInfinite(canonActual)) {
             throw new IllegalArgumentException("El canon debe ser mayor a cero (se recibió: " + canonActual + ").");
@@ -157,14 +160,35 @@ public class ContratoArriendo extends Contrato {
         }
     }
 
-    /** RF-16: los avisos del contrato (RF-17, en la clase padre) más los de cada uno de sus pagos. */
+    /**
+     * RF-16: los avisos del contrato (RF-17, en la clase padre) más los de cada uno de sus pagos.
+     * Un contrato finalizado ya no avisa sus pagos (igual que RF-09 y RF-19, que solo miran contratos activos).
+     */
     @Override
     public List<Notificacion> generarNotificaciones(LocalDate hoy) {
         List<Notificacion> avisos = super.generarNotificaciones(hoy);
-        for (Pago pago : pagos) {
-            avisos.addAll(pago.generarNotificaciones(hoy)); // composición: el gestor no conoce los pagos
+        if (ACTIVO.equals(estado)) {
+            for (Pago pago : pagos) {
+                avisos.addAll(pago.generarNotificaciones(hoy)); // composición: el gestor no conoce los pagos
+            }
         }
         return avisos;
+    }
+
+    /**
+     * RF-10: al terminar, se quitan las cuotas pendientes que vencen en la fecha de terminación o después,
+     * porque cubren meses en los que ya no hay arriendo. Las cuotas anteriores se conservan (se siguen debiendo)
+     * y también los pagos ya registrados. Las cuotas quitadas se borran también del archivo.
+     */
+    @Override
+    protected void alTerminar(LocalDate fecha) {
+        pagos.removeIf(pago -> {
+            boolean sobra = pago.estaPendiente() && !pago.getFechaLimite().isBefore(fecha);
+            if (sobra) {
+                pago.eliminarDelArchivo();
+            }
+            return sobra;
+        });
     }
 
     /** RF-19: el pago en mora más antiguo (reutiliza Pago.estaEnMora de RF-16), o null si está al día. */

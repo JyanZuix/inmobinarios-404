@@ -116,6 +116,11 @@ public class Pago implements Persistible, Notificable {
         }
     }
 
+    // Lo llama ContratoArriendo al terminar (RF-10): una cuota que ya no se debe no debe volver al recargar.
+    void eliminarDelArchivo() {
+        ArchivoPlano.eliminarRegistro(ARCHIVO, clave());
+    }
+
     // Clave única: el id del pago solo es único dentro de su contrato.
     private String clave() {
         return numeroContrato + ":" + idPago;
