@@ -25,9 +25,4 @@ public class Comprador extends Cliente {
     protected String[] datosPropios() {
         return new String[]{String.valueOf(requiereFinanciamiento)};
     }
-
-    @Override
-    protected void aplicarDatosPropios(String[] datos) {
-        this.requiereFinanciamiento = Boolean.parseBoolean(datos[0]);
-    }
 }

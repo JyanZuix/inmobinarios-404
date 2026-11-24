@@ -64,17 +64,4 @@ public class Propietario implements Persistible {
     public void guardar() {
         ArchivoPlano.guardarRegistro(ARCHIVO, new String[]{documento, nombre, contacto});
     }
-
-    @Override
-    public void cargar() {
-        String[] registro = ArchivoPlano.buscarRegistro(ARCHIVO, documento);
-        if (registro == null) {
-            throw new IllegalStateException("No hay ningún propietario guardado con el documento " + documento + ".");
-        }
-        if (registro.length < 3 || registro[1].isBlank() || registro[2].isBlank()) {
-            throw new IllegalStateException("El registro guardado del propietario " + documento + " está dañado.");
-        }
-        this.nombre = registro[1];
-        this.contacto = registro[2];
-    }
 }

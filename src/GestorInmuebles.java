@@ -52,12 +52,9 @@ public class GestorInmuebles extends Gestor {
         if (modalidad == null || modalidad.isBlank()) {
             throw new IllegalArgumentException("La modalidad es obligatoria para consultar inmuebles disponibles.");
         }
-        String modalidadNormalizada = modalidad.trim();
-        if (Propiedad.MODO_ARRIENDO.equalsIgnoreCase(modalidadNormalizada)) {
-            modalidadNormalizada = Propiedad.MODO_ARRIENDO;
-        } else if (Propiedad.MODO_VENTA.equalsIgnoreCase(modalidadNormalizada)) {
-            modalidadNormalizada = Propiedad.MODO_VENTA;
-        } else {
+        // Misma normalización que usa la propiedad al registrarse ("arriendo" → "Arriendo").
+        String modalidadNormalizada = Propiedad.normalizarModo(modalidad);
+        if (!Propiedad.MODO_ARRIENDO.equals(modalidadNormalizada) && !Propiedad.MODO_VENTA.equals(modalidadNormalizada)) {
             throw new IllegalArgumentException("Modalidad no válida: '" + modalidad
                     + "'. Debe ser '" + Propiedad.MODO_ARRIENDO + "' o '" + Propiedad.MODO_VENTA + "'.");
         }

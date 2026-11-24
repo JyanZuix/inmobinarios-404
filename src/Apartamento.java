@@ -34,13 +34,6 @@ public class Apartamento extends Propiedad {
         return new String[]{String.valueOf(numHabitaciones)};
     }
 
-    @Override
-    protected void aplicarDatosPropios(String[] datos) {
-        int habitaciones = Integer.parseInt(datos[0]);
-        validarHabitaciones(habitaciones);
-        this.numHabitaciones = habitaciones;
-    }
-
     private static void validarHabitaciones(int habitaciones) {
         if (habitaciones < 1) {
             throw new IllegalArgumentException("El apartamento debe tener al menos 1 habitación (se recibió: "

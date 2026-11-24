@@ -67,18 +67,7 @@ public class Interesado extends Persona {
         guardarSeguimientos(clave());
     }
 
-    @Override
-    public void cargar() {
-        String[] datos = ArchivoPlano.buscarRegistro(ARCHIVO, id.toString());
-        if (datos == null) {
-            throw new IllegalStateException("No hay un registro guardado para " + nombre + ".");
-        }
-        // Las relaciones se reconstruyen en GestorInmuebles.cargarTodo(), igual que las de Propiedad.
-        cargarSeguimientosGuardados();
-        this.nombre = datos[1];
-        this.contacto = datos[2];
-    }
-
+    // Lo llama GestorInmuebles.cargarTodo() al recrear el interesado (la clave es privada de esta clase).
     void cargarSeguimientosGuardados() {
         cargarSeguimientos(clave());
     }

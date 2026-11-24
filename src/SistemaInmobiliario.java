@@ -38,7 +38,7 @@ public class SistemaInmobiliario {
     public void cargarTodo() {
         for (Gestor gestor : gestores) {
             gestor.cargarTodo();
-            gestor.cargarNotificaciones(); // RF-21 tambien el estado de los avisos
+            gestor.cargarNotificaciones(); // RF-21: también el estado de los avisos
         }
     }
 
@@ -60,12 +60,12 @@ public class SistemaInmobiliario {
         for (Gestor gestor : gestores) {
             pendientes.addAll(gestor.listarNotificacionesPendientes());
         }
-        // se ordenan por la fecha del evento, la mas vieja primero
+        // se ordenan por la fecha del evento, la más vieja primero
         pendientes.sort(Comparator.comparing(Notificacion::getFechaEvento));
         return pendientes;
     }
 
-    /** RF-21: marca la notificacion como atendida y guarda para que no se pierda al reiniciar. */
+    /** RF-21: marca la notificación como atendida y guarda para que no se pierda al reiniciar. */
     public void marcarNotificacionAtendida(Notificacion notificacion) {
         notificacion.marcarAtendida();
         notificacion.guardar();

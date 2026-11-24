@@ -192,24 +192,6 @@ public class Pago implements Persistible, Notificable {
         ArchivoPlano.guardarRegistro(ARCHIVO, campos);
     }
 
-    @Override
-    public void cargar() {
-        String[] registro = ArchivoPlano.buscarRegistro(ARCHIVO, clave());
-        if (registro == null) {
-            throw new IllegalStateException("No hay ningún pago guardado con la clave " + clave() + ".");
-        }
-        try {
-            this.fechaLimite = LocalDate.parse(registro[1]);
-            this.fechaPago = registro[2].isEmpty() ? null : LocalDate.parse(registro[2]);
-            this.periodoCubierto = registro[3];
-            this.montoPagado = Double.parseDouble(registro[4]);
-            this.estadoPago = registro[5];
-        } catch (RuntimeException e) {
-            throw new IllegalStateException("El registro guardado del pago " + clave() + " está dañado: "
-                    + e.getMessage(), e);
-        }
-    }
-
     // Lo llama ContratoArriendo al terminar (RF-10): una cuota que ya no se debe no debe volver al recargar.
     void eliminarDelArchivo() {
         ArchivoPlano.eliminarRegistro(ARCHIVO, clave());

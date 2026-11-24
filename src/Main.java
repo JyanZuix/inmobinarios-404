@@ -427,7 +427,7 @@ public class Main {
                         + " inmuebles y citas " + interesado.consultarSeguimientos(hoy));
             }
 
-            // RF-21 la notificacion atendida sigue atendida despues del reinico
+            // RF-21: la notificación atendida sigue atendida después del reinicio
             recargado.recolectarNotificaciones(hoy);
             boolean sigueAtendida = true;
             for (Notificacion n : recargado.listarNotificacionesPendientes()) {

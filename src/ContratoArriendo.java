@@ -145,20 +145,21 @@ public class ContratoArriendo extends Contrato {
             throw new IllegalStateException("Solo se pueden agregar pagos a un contrato activo (estado actual: "
                     + estado + ").");
         }
-        if (pago != null) {
-            YearMonth periodo = YearMonth.parse(pago.getPeriodoCubierto());
-            if (periodo.isBefore(YearMonth.from(fechaInicio)) || periodo.isAfter(YearMonth.from(fechaFin))) {
-                throw new IllegalArgumentException("El periodo " + periodo + " está fuera del contrato " + numeroContrato
-                        + " (del " + fechaInicio + " al " + fechaFin + ").");
-            }
-            if (tienePagoDelPeriodo(pago.getPeriodoCubierto())) {
-                throw new IllegalArgumentException("El contrato " + numeroContrato + " ya tiene un pago para el periodo "
-                        + periodo + ".");
-            }
-            if (pago.getFechaPago() != null && pago.getFechaPago().isBefore(fechaInicio)) {
-                throw new IllegalArgumentException("La fecha de pago (" + pago.getFechaPago() + ") no puede ser anterior "
-                        + "al inicio del contrato (" + fechaInicio + ").");
-            }
+        if (pago == null) {
+            throw new IllegalArgumentException("No se puede agregar un pago nulo.");
+        }
+        YearMonth periodo = YearMonth.parse(pago.getPeriodoCubierto());
+        if (periodo.isBefore(YearMonth.from(fechaInicio)) || periodo.isAfter(YearMonth.from(fechaFin))) {
+            throw new IllegalArgumentException("El periodo " + periodo + " está fuera del contrato " + numeroContrato
+                    + " (del " + fechaInicio + " al " + fechaFin + ").");
+        }
+        if (tienePagoDelPeriodo(pago.getPeriodoCubierto())) {
+            throw new IllegalArgumentException("El contrato " + numeroContrato + " ya tiene un pago para el periodo "
+                    + periodo + ".");
+        }
+        if (pago.getFechaPago() != null && pago.getFechaPago().isBefore(fechaInicio)) {
+            throw new IllegalArgumentException("La fecha de pago (" + pago.getFechaPago() + ") no puede ser anterior "
+                    + "al inicio del contrato (" + fechaInicio + ").");
         }
         incorporarPago(pago);
     }
@@ -319,13 +320,6 @@ public class ContratoArriendo extends Contrato {
                 String.valueOf(porcentajeIncremento),
                 ultimaFechaActualizacion.toString()
         };
-    }
-
-    @Override
-    protected void aplicarDatosPropios(String[] datos) {
-        this.canonActual = Double.parseDouble(datos[0]);
-        this.porcentajeIncremento = Double.parseDouble(datos[1]);
-        this.ultimaFechaActualizacion = LocalDate.parse(datos[2]);
     }
 
     // El canon sale del valor base de la propiedad, así que la propiedad debe estar en modo Arriendo.

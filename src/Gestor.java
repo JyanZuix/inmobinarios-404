@@ -19,14 +19,14 @@ public abstract class Gestor {
         for (Persistible elemento : elementosPersistibles()) {
             elemento.guardar();
         }
-        // RF-21 tambien se guardan las notificasiones con su estado
+        // RF-21: también se guardan las notificaciones con su estado
         for (Notificacion n : notificaciones) {
             n.guardar();
         }
     }
 
     // RF-21 al arrancar se traen las notificaciones guardadas, incluidas las atendidas para que no se dupliquen.
-    // todas van en el mismo archivo, cada gestor solo toma las que son suyas segun el origen
+    // todas van en el mismo archivo; cada gestor solo toma las que son suyas según el origen
     public void cargarNotificaciones() {
         List<Notificacion> leidas = new ArrayList<>();
         for (String[] r : ArchivoPlano.leerTodos(Notificacion.ARCHIVO)) {
@@ -38,7 +38,7 @@ public abstract class Gestor {
         agregarNotificaciones(leidas);
     }
 
-    // cada hijo dice que origenes le perteneceen (PAGO:, CONTRATO:, ...)
+    // cada hijo dice qué orígenes le pertenecen (PAGO:, CONTRATO:, ...)
     protected abstract boolean esMiNotificacion(Notificacion n);
 
     /**
@@ -74,7 +74,7 @@ public abstract class Gestor {
         }
     }
 
-    // RF-20 solo las que no estan atendidas
+    // RF-20: solo las que no están atendidas
     public List<Notificacion> listarNotificacionesPendientes() {
         List<Notificacion> pendientes = new ArrayList<>();
         for (Notificacion n : notificaciones) {

@@ -85,13 +85,6 @@ public class ContratoVenta extends Contrato {
         };
     }
 
-    @Override
-    protected void aplicarDatosPropios(String[] datos) {
-        this.valorVenta = Double.parseDouble(datos[0]);
-        this.cuotaInicial = Double.parseDouble(datos[1]);
-        this.saldoFinanciado = Double.parseDouble(datos[2]);
-    }
-
     // El valor de venta sale del valor base de la propiedad, así que debe estar en modo Venta.
     private static void validarModo(Propiedad propiedad) {
         if (!Propiedad.MODO_VENTA.equals(propiedad.getModo())) {
@@ -102,7 +95,8 @@ public class ContratoVenta extends Contrato {
 
     // Un comprador sin financiamiento paga el total: la cuota inicial es el valor de venta y no queda saldo.
     private static void validarFinanciamiento(Comprador comprador, double cuotaInicial, double precio) {
-        if (comprador != null && !comprador.isRequiereFinanciamiento() && cuotaInicial != precio) {
+        // El comprador nunca es null: el constructor de Contrato ya lo rechaza antes de llegar aquí.
+        if (!comprador.isRequiereFinanciamiento() && cuotaInicial != precio) {
             throw new IllegalArgumentException("El comprador " + comprador.getNombre() + " no requiere financiamiento: "
                     + "la cuota inicial debe ser el valor de venta (" + Utilidades.moneda(precio) + ").");
         }

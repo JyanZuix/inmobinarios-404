@@ -1,6 +1,5 @@
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -73,12 +72,12 @@ public abstract class Contrato implements Persistible, Notificable {
     }
 
     /**
-     * RF-03: formaliza el contrato. Devuelve true si se creó; si no se puede crear, LANZA una excepción
-     * que explica el motivo (así quien opera el sistema sabe qué corregir).
+     * RF-03: formaliza el contrato. Si no se puede crear, LANZA una excepción que explica el motivo
+     * (así quien opera el sistema sabe qué corregir).
      * Default (sin public): solo lo llama GestorContratos.agregarContrato(), que antes verifica que la
      * propiedad esté en el inventario y después guarda el contrato en su lista.
      */
-    boolean crearContrato() {
+    void crearContrato() {
         if (estado != null) {
             throw new IllegalStateException("El contrato " + numeroContrato + " ya fue creado.");
         }
@@ -97,7 +96,6 @@ public abstract class Contrato implements Persistible, Notificable {
         this.estado = ACTIVO;
         propiedad.asignarContrato(this, estadoPropiedadAlCrear()); // ocupa la propiedad: contratoActual + estado
         cliente.asignarContrato(this);                             // historial del cliente (puede tener varios)
-        return true;
     }
 
     /**
@@ -237,43 +235,9 @@ public abstract class Contrato implements Persistible, Notificable {
         ArchivoPlano.guardarRegistro(ARCHIVO, ArchivoPlano.concatenar(comunes, datosPropios()));
     }
 
-    @Override
-    public void cargar() {
-        if (estado == null) {
-            throw new IllegalStateException("El contrato aún no ha sido creado, por eso no tiene un registro que cargar.");
-        }
-        String[] registro = ArchivoPlano.buscarRegistro(ARCHIVO, String.valueOf(numeroContrato));
-        if (registro == null) {
-            throw new IllegalStateException("No hay ningún contrato guardado con el número " + numeroContrato + ".");
-        }
-        try {
-            // registro[1] es el tipo del contrato: solo se usa al recrear el sistema (GestorContratos.cargarTodo).
-            LocalDate inicio = LocalDate.parse(registro[2]);
-            LocalDate fin = LocalDate.parse(registro[3]);
-            validarFechas(inicio, fin);
-            String estadoGuardado = registro[4];
-            if (!ACTIVO.equals(estadoGuardado) && !FINALIZADO.equals(estadoGuardado)) {
-                throw new IllegalArgumentException("estado desconocido '" + estadoGuardado + "'");
-            }
-            this.fechaInicio = inicio;
-            this.fechaFin = fin;
-            this.estado = estadoGuardado;
-            // registro[5] (dirección de la propiedad) y registro[6] (documento del cliente) son referencias:
-            // las reconecta GestorContratos.cargarTodo() al recrear el sistema.
-            aplicarDatosPropios(Arrays.copyOfRange(registro, 7, registro.length));
-        } catch (RuntimeException e) {
-            throw new IllegalStateException("El registro guardado del contrato " + numeroContrato
-                    + " está dañado: " + e.getMessage(), e);
-        }
-    }
-
-    // Cada hija agrega aquí sus campos propios al guardar y los lee al cargar (por defecto no hay ninguno).
+    // Cada hija agrega aquí sus campos propios al guardar (por defecto no hay ninguno).
     protected String[] datosPropios() {
         return new String[0];
-    }
-
-    protected void aplicarDatosPropios(String[] datos) {
-        // Sin datos propios por defecto.
     }
 
     /**

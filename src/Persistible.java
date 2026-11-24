@@ -1,13 +1,11 @@
 /**
  * Interfaz Persistible (RNF-01).
- * Todo objeto que deba sobrevivir entre ejecuciones sabe guardarse y cargarse
- * en un archivo plano. Cada clase decide cómo escribir y leer sus propios datos.
+ * Todo objeto que deba sobrevivir entre ejecuciones sabe guardarse en un archivo plano.
+ * Cada clase decide qué campos escribe. La carga no está aquí: el sistema se recrea entero al arrancar con
+ * SistemaInmobiliario.cargarTodo(), que crea los objetos desde los archivos y reconecta sus relaciones.
  */
 public interface Persistible {
 
     /** Escribe (o actualiza) el registro de este objeto en su archivo plano. */
     void guardar();
-
-    /** Vuelve a leer del archivo plano el registro de este objeto (identificado por su clave). */
-    void cargar();
 }

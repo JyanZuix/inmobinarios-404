@@ -39,7 +39,7 @@ public class Notificacion implements Persistible {
         this.atendida = false;
     }
 
-    // RF-21 marca el aviso como atendido y asi ya no sale en las pendeintes
+    // RF-21: marca el aviso como atendido y así ya no sale en las pendientes
     public void marcarAtendida() {
         atendida = true;
     }
@@ -59,29 +59,19 @@ public class Notificacion implements Persistible {
                 && fechaEvento.equals(otra.fechaEvento);
     }
 
-    // clave del registro, tipo + origen + fecha porque eso es lo que la hace unica
+    // Clave del registro: tipo + origen + fecha, porque eso es lo que la hace única
     public String clave() {
         return tipo + ":" + idOrigen + ":" + fechaEvento;
     }
 
-    // RF-21 se guarda en notificaciones.txt con el estado atendida, asi al reinicar no vuelve
+    // RF-21: se guarda en notificaciones.txt con el estado atendida, así al reiniciar no vuelve
     @Override
     public void guardar() {
         String[] campos = {clave(), tipo, mensaje, fechaEvento.toString(), idOrigen, String.valueOf(atendida)};
         ArchivoPlano.guardarRegistro(ARCHIVO, campos);
     }
 
-    // lee otra vez el registro y recupera mensaje y si ya estaba atendida
-    @Override
-    public void cargar() {
-        String[] r = ArchivoPlano.buscarRegistro(ARCHIVO, clave());
-        if (r != null) {
-            mensaje = r[2];
-            atendida = Boolean.parseBoolean(r[5]);
-        }
-    }
-
-    // crea la notificacion desde una linea del archvio
+    // Crea la notificación desde una línea del archivo (la usa Gestor.cargarNotificaciones()).
     public static Notificacion desdeRegistro(String[] r) {
         Notificacion n = new Notificacion(r[1], r[2], LocalDate.parse(r[3]), r[4]);
         n.atendida = Boolean.parseBoolean(r[5]);

@@ -1,6 +1,5 @@
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -107,35 +106,9 @@ public abstract class Cliente extends Persona {
         guardarSeguimientos(clave()); // las fechas de seguimiento van en seguimientos.txt
     }
 
-    @Override
-    public void cargar() {
-        String[] registro = ArchivoPlano.buscarRegistro(ARCHIVO, clave());
-        if (registro == null) {
-            throw new IllegalStateException("No hay ningún " + getClass().getSimpleName()
-                    + " guardado con el documento " + documento + ".");
-        }
-        try {
-            String nombreGuardado = registro[2];
-            String contactoGuardado = registro[3];
-            if (nombreGuardado.isBlank() || contactoGuardado.isBlank()) {
-                throw new IllegalArgumentException("faltan datos obligatorios");
-            }
-            this.nombre = nombreGuardado;
-            this.contacto = contactoGuardado;
-            aplicarDatosPropios(Arrays.copyOfRange(registro, 4, registro.length));
-        } catch (RuntimeException e) {
-            throw new IllegalStateException("El registro guardado del cliente " + documento
-                    + " está dañado: " + e.getMessage(), e);
-        }
-    }
-
-    // Cada hija agrega aquí sus campos propios al guardar y los lee al cargar (por defecto no hay ninguno).
+    // Cada hija agrega aquí sus campos propios al guardar (por defecto no hay ninguno).
     protected String[] datosPropios() {
         return new String[0];
-    }
-
-    protected void aplicarDatosPropios(String[] datos) {
-        // Sin datos propios por defecto.
     }
 
     /** Ficha del cliente para mostrarla en pantalla: lo que dice describir() más el contacto. */

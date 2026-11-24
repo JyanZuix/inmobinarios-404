@@ -1,5 +1,4 @@
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -59,10 +58,10 @@ public abstract class Propiedad implements Persistible {
 
     /**
      * Valida los datos de la propiedad (RF-01 / RNF-02).
-     * Devuelve true si todo es correcto; si algo está mal LANZA una excepción que explica el problema.
+     * Si algo está mal LANZA una excepción que explica el problema.
      * Es final porque el constructor lo llama: así ninguna hija puede cambiarlo antes de estar construida.
      */
-    public final boolean validarDatos() {
+    public final void validarDatos() {
         if (direccion == null || direccion.isBlank()) {
             throw new IllegalArgumentException("La dirección de la propiedad es obligatoria.");
         }
@@ -85,7 +84,6 @@ public abstract class Propiedad implements Persistible {
         if (!esEstadoValido(estado)) {
             throw new IllegalArgumentException("Estado inválido: '" + estado + "'.");
         }
-        return true;
     }
 
     /**
@@ -244,41 +242,15 @@ public abstract class Propiedad implements Persistible {
         ArchivoPlano.guardarRegistro(ARCHIVO, ArchivoPlano.concatenar(comunes, datosPropios()));
     }
 
-    @Override
-    public void cargar() {
-        String[] registro = ArchivoPlano.buscarRegistro(ARCHIVO, direccion);
-        if (registro == null) {
-            throw new IllegalStateException("No hay ninguna propiedad guardada con la dirección '" + direccion + "'.");
-        }
-        try {
-            this.area = Double.parseDouble(registro[1]);
-            this.valorBase = Double.parseDouble(registro[2]);
-            this.tipo = registro[3];
-            this.modo = registro[4];
-            this.estado = registro[5];
-            // registro[6] (documento del propietario) y registro[7] (número del contrato actual) son referencias
-            // a otros objetos: las reconectan GestorInmuebles.cargarTodo() y GestorContratos.cargarTodo().
-            validarDatos();
-            aplicarDatosPropios(Arrays.copyOfRange(registro, 8, registro.length));
-        } catch (RuntimeException e) {
-            throw new IllegalStateException("El registro guardado de la propiedad '" + direccion
-                    + "' está dañado: " + e.getMessage(), e);
-        }
-    }
-
     // Lo llama GestorInmuebles.quitarPropiedad(): borra el registro del archivo para que la propiedad
     // quitada no vuelva a aparecer al reiniciar el sistema.
     void eliminarDelArchivo() {
         ArchivoPlano.eliminarRegistro(ARCHIVO, direccion);
     }
 
-    // Cada hija agrega aquí sus campos propios al guardar y los lee al cargar (por defecto no hay ninguno).
+    // Cada hija agrega aquí sus campos propios al guardar (por defecto no hay ninguno).
     protected String[] datosPropios() {
         return new String[0];
-    }
-
-    protected void aplicarDatosPropios(String[] datos) {
-        // Sin datos propios por defecto.
     }
 
     // ===================== Getters =====================
@@ -309,7 +281,8 @@ public abstract class Propiedad implements Persistible {
     }
 
     // Acepta "arriendo", "ARRIENDO", "venta"... y lo deja con el formato oficial.
-    private static String normalizarModo(String valor) {
+    // Default (sin public): la usan el constructor y GestorInmuebles.listarDisponibles() (RF-13).
+    static String normalizarModo(String valor) {
         if (valor == null) {
             return null;
         }

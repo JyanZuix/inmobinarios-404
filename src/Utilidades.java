@@ -1,6 +1,5 @@
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
-import java.util.Locale;
 
 /**
  * Utilidades internas compartidas (igual que ArchivoPlano, NO es una clase del dominio ni aparece en el UML):
@@ -71,7 +70,7 @@ final class Utilidades {
 
     /** Muestra un monto como lo leería una persona: 30000000.0 → "$30.000.000". */
     static String moneda(double valor) {
-        DecimalFormatSymbols simbolos = new DecimalFormatSymbols(new Locale("es", "CO"));
+        DecimalFormatSymbols simbolos = new DecimalFormatSymbols(); // los separadores se fijan a mano
         simbolos.setGroupingSeparator('.');
         simbolos.setDecimalSeparator(',');
         return "$" + new DecimalFormat("#,##0", simbolos).format(valor);
@@ -79,7 +78,7 @@ final class Utilidades {
 
     /** Muestra un porcentaje guardado como fracción: 0.05 → "5 %", 0.075 → "7,5 %". */
     static String porcentaje(double fraccion) {
-        DecimalFormatSymbols simbolos = new DecimalFormatSymbols(new Locale("es", "CO"));
+        DecimalFormatSymbols simbolos = new DecimalFormatSymbols();
         simbolos.setDecimalSeparator(',');
         return new DecimalFormat("0.##", simbolos).format(fraccion * 100) + " %";
     }

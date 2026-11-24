@@ -74,13 +74,12 @@ public class GestorContratos extends Gestor {
         return filtrarContratosEnMora(LocalDate.now());
     }
 
-    public void verificarPagosVencidos() {
-        verificarPagosVencidos(LocalDate.now());
-    }
-
     /** RF-09: incluye contratos activos con al menos una cuota vencida y sin pagar. */
     public List<Contrato> filtrarContratosEnMora(LocalDate hoy) {
-        verificarPagosVencidos(hoy);
+        if (hoy == null) {
+            throw new IllegalArgumentException("La fecha de consulta es obligatoria.");
+        }
+        generarCuotasHasta(hoy); // primero existen las cuotas que ya debían cobrarse
         List<Contrato> enMora = new ArrayList<>();
         for (Contrato contrato : contratos) {
             if (Contrato.ACTIVO.equals(contrato.getEstado()) && contrato.tienePagosVencidos(hoy)) {
@@ -88,13 +87,6 @@ public class GestorContratos extends Gestor {
             }
         }
         return enMora;
-    }
-
-    private void verificarPagosVencidos(LocalDate hoy) {
-        if (hoy == null) {
-            throw new IllegalArgumentException("La fecha de consulta es obligatoria.");
-        }
-        generarCuotasHasta(hoy);
     }
 
     /** RF-15 con la fecha de hoy (atajo para el uso real del sistema). */
