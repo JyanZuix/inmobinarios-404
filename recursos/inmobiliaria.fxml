@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="ControladorInmobiliaria" prefWidth="880" prefHeight="470" spacing="8">
+    <padding><Insets top="10" right="12" bottom="10" left="12"/></padding>
+
+    <TabPane tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS">
+        <Tab text="Inmuebles">
+            <VBox spacing="10">
+                <padding><Insets top="12" right="12" bottom="12" left="12"/></padding>
+                <HBox spacing="8">
+                    <Button text="Registrar inmueble" onAction="#registrarInmueble"/>
+                    <ComboBox fx:id="filtroInmuebles" onAction="#consultarInmuebles"/>
+                    <Button text="Ver depósito" onAction="#consultarDeposito"/>
+                </HBox>
+                <ListView fx:id="listaInmuebles" VBox.vgrow="ALWAYS">
+                    <placeholder><Label text="No hay inmuebles para mostrar."/></placeholder>
+                </ListView>
+            </VBox>
+        </Tab>
+        <Tab text="Clientes">
+            <VBox spacing="10">
+                <padding><Insets top="12" right="12" bottom="12" left="12"/></padding>
+                <HBox spacing="8">
+                    <Button text="Registrar cliente" onAction="#registrarCliente"/>
+                    <Button text="Agregar seguimiento" onAction="#agregarCitaCliente"/>
+                    <Button text="Ver citas pendientes" onAction="#verCitasCliente"/>
+                </HBox>
+                <ListView fx:id="listaClientes" VBox.vgrow="ALWAYS">
+                    <placeholder><Label text="No hay clientes registrados."/></placeholder>
+                </ListView>
+            </VBox>
+        </Tab>
+        <Tab text="Contratos">
+            <VBox spacing="10">
+                <padding><Insets top="12" right="12" bottom="12" left="12"/></padding>
+                <HBox spacing="8">
+                    <Button text="Crear arriendo" onAction="#crearArriendo"/>
+                    <Button text="Crear venta" onAction="#crearVenta"/>
+                    <Button text="Terminar contrato" onAction="#terminarContrato"/>
+                    <Button text="Cancelar venta" onAction="#cancelarVenta"/>
+                    <Button text="Vencimientos" onAction="#consultarVencimientos"/>
+                </HBox>
+                <ListView fx:id="listaContratos" VBox.vgrow="ALWAYS">
+                    <placeholder><Label text="No hay contratos registrados."/></placeholder>
+                </ListView>
+            </VBox>
+        </Tab>
+        <Tab text="Pagos">
+            <VBox spacing="10">
+                <padding><Insets top="12" right="12" bottom="12" left="12"/></padding>
+                <ComboBox fx:id="contratoPagos" promptText="Selecciona un contrato de arriendo"
+                          onAction="#consultarPagos" maxWidth="Infinity"/>
+                <HBox spacing="8">
+                    <Button text="Registrar pago mensual" onAction="#registrarPago"/>
+                    <Label fx:id="canon" wrapText="true"/>
+                </HBox>
+                <ListView fx:id="listaPagos" VBox.vgrow="ALWAYS">
+                    <placeholder><Label text="No hay pagos para mostrar."/></placeholder>
+                </ListView>
+            </VBox>
+        </Tab>
+        <Tab text="Pagos en mora">
+            <VBox spacing="10">
+                <padding><Insets top="12" right="12" bottom="12" left="12"/></padding>
+                <Label text="Contratos activos con pagos en mora"/>
+                <Button text="Consultar" onAction="#consultarMora"/>
+                <ListView fx:id="listaMora" VBox.vgrow="ALWAYS">
+                    <placeholder><Label text="No hay contratos en mora."/></placeholder>
+                </ListView>
+            </VBox>
+        </Tab>
+        <Tab text="Interesados">
+            <VBox spacing="10">
+                <padding><Insets top="12" right="12" bottom="12" left="12"/></padding>
+                <HBox spacing="8">
+                    <Button text="Registrar interesado" onAction="#registrarInteresado"/>
+                    <Button text="Agregar seguimiento" onAction="#agregarCitaInteresado"/>
+                    <Button text="Ver citas pendientes" onAction="#verCitasInteresado"/>
+                </HBox>
+                <ListView fx:id="listaInteresados" VBox.vgrow="ALWAYS">
+                    <placeholder><Label text="No hay interesados registrados."/></placeholder>
+                </ListView>
+            </VBox>
+        </Tab>
+        <Tab text="Avisos">
+            <VBox spacing="10">
+                <padding><Insets top="12" right="12" bottom="12" left="12"/></padding>
+                <HBox spacing="8">
+                    <Button text="Actualizar avisos" onAction="#consultarAvisos"/>
+                    <Button text="Marcar como atendido" onAction="#atenderAviso"/>
+                </HBox>
+                <ListView fx:id="listaAvisos" VBox.vgrow="ALWAYS">
+                    <placeholder><Label text="No hay avisos pendientes."/></placeholder>
+                </ListView>
+            </VBox>
+        </Tab>
+    </TabPane>
+    <HBox spacing="8" alignment="CENTER_LEFT">
+        <Label fx:id="estado" wrapText="true" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+        <Button fx:id="botonGuardar" text="Reintentar guardado" onAction="#reintentarGuardado"
+                visible="false" managed="false"/>
+        <Button text="Recargar datos" onAction="#recargarDatos"
+                disable="${botonGuardar.visible}"/>
+    </HBox>
+</VBox>
