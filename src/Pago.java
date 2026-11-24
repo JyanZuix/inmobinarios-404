@@ -1,5 +1,6 @@
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,6 +9,9 @@ public class Pago implements Persistible, Notificable {
     private static final int DIAS_AVISO_PREVIO = 7; // RF-16: avisar los pagos que vencen en 7 días o menos
     public static final String PENDIENTE = "pendiente";
     public static final String PAGADO = "pagado";
+    public static final String PAGADO_CON_MORA = "pagado con mora";
+    // RF-06: interés de mora por cada día de atraso, sobre el canon (0,1 % diario ≈ 3 % al mes).
+    public static final double TASA_MORA_DIARIA = 0.001;
 
     private int numeroContrato; // contrato al que pertenece; 0 mientras no se haya agregado a uno
     private int idPago;
@@ -50,8 +54,16 @@ public class Pago implements Persistible, Notificable {
                     + fechaLimite + ".");
         }
         this.fechaPago = fechaPago;
-        this.montoPagado = canon;
-        this.estadoPago = PAGADO;
+        if (verificarFechaLimite()) {
+            // RF-06: pagó tarde → interés según los días de atraso, sumado al valor a pagar.
+            this.mora = new Mora(diasAtraso(), TASA_MORA_DIARIA);
+            this.montoPagado = canon + mora.calcularValor(canon);
+            this.estadoPago = PAGADO_CON_MORA;
+        } else {
+            this.mora = null;
+            this.montoPagado = canon;
+            this.estadoPago = PAGADO;
+        }
     }
 
     /** RF-05: el periodo cubierto ("2026-11") debe ser el mes de la fecha límite de la cuota. */
@@ -63,12 +75,30 @@ public class Pago implements Persistible, Notificable {
         }
     }
 
+    /**
+     * RF-06: valor del interés de mora incluido en el monto pagado (0 si se pagó a tiempo o sigue pendiente).
+     * Si el pago se cargó desde archivo, se recalcula con los datos guardados:
+     * monto = canon * (1 + tasa * días)  →  interés = monto - monto / (1 + tasa * días).
+     */
     public double calcularMora() {
-        throw new UnsupportedOperationException("Pendiente: RF-06");
+        if (!verificarFechaLimite()) {
+            return 0;
+        }
+        if (mora != null) {
+            return mora.valorInteres;
+        }
+        double canon = montoPagado / (1 + TASA_MORA_DIARIA * diasAtraso());
+        return montoPagado - canon;
     }
 
+    /** RF-06: true si el pago se registró después de la fecha límite (es decir, con atraso). */
     public boolean verificarFechaLimite() {
-        throw new UnsupportedOperationException("Pendiente: RF-06");
+        return fechaPago != null && fechaPago.isAfter(fechaLimite);
+    }
+
+    /** RF-06: días entre la fecha límite y la fecha de pago (0 si se pagó a tiempo o sigue pendiente). */
+    public int diasAtraso() {
+        return verificarFechaLimite() ? (int) ChronoUnit.DAYS.between(fechaLimite, fechaPago) : 0;
     }
 
     /** Un pago está pendiente mientras no tenga fecha de pago (no se ha registrado). */
@@ -193,8 +223,10 @@ public class Pago implements Persistible, Notificable {
             this.tasaMora = tasaMora;
         }
 
-        public double calcularValor() {
-            throw new UnsupportedOperationException("Pendiente: RF-06");
+        // RF-06: interés = canon * tasa diaria * días de atraso.
+        public double calcularValor(double canon) {
+            valorInteres = canon * tasaMora * diasAtraso;
+            return valorInteres;
         }
     }
 }
