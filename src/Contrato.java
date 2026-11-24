@@ -82,6 +82,12 @@ public abstract class Contrato implements Persistible, Notificable {
         if (estado != null) {
             throw new IllegalStateException("El contrato " + numeroContrato + " ya fue creado.");
         }
+        if (Propiedad.ARRENDADA.equals(propiedad.getEstado())) {
+            // RF-04: una propiedad arrendada no admite otro contrato hasta que se termine el actual (RF-10).
+            throw new IllegalStateException("No se puede crear el contrato: la propiedad '" + propiedad.getDireccion()
+                    + "' ya está arrendada (contrato " + propiedad.getContratoActual().getNumeroContrato()
+                    + "). Termine ese contrato antes de crear uno nuevo.");
+        }
         if (!verificarDisponibilidad()) {
             throw new IllegalStateException("No se puede crear el contrato: la propiedad '" + propiedad.getDireccion()
                     + "' no está disponible (estado actual: " + propiedad.getEstado() + ").");
@@ -93,8 +99,6 @@ public abstract class Contrato implements Persistible, Notificable {
         cliente.asignarContrato(this);                             // historial del cliente (puede tener varios)
         return true;
     }
-
-    // RF-04 ya se bloquea con verificarDisponibilidad() dentro de crearContrato().
 
     /**
      * RNF-01: vuelve a enlazar un contrato cargado desde archivo con su propiedad y su cliente.

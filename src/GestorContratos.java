@@ -48,6 +48,28 @@ public class GestorContratos extends Gestor {
         contratos.add(contrato);
     }
 
+    /** Busca un contrato por su número; null si no existe. */
+    public Contrato buscarContrato(int numeroContrato) {
+        for (Contrato contrato : contratos) {
+            if (contrato.getNumeroContrato() == numeroContrato) {
+                return contrato;
+            }
+        }
+        return null;
+    }
+
+    /** RF-05: registra el pago mensual del periodo dado en un contrato de arriendo. */
+    public Pago registrarPago(int numeroContrato, String periodo, LocalDate fechaPago) {
+        Contrato contrato = buscarContrato(numeroContrato);
+        if (contrato == null) {
+            throw new IllegalArgumentException("No existe el contrato " + numeroContrato + ".");
+        }
+        if (!(contrato instanceof ContratoArriendo)) {
+            throw new IllegalArgumentException("El contrato " + numeroContrato + " no es de arriendo: no tiene pagos mensuales.");
+        }
+        return ((ContratoArriendo) contrato).registrarPago(periodo, fechaPago);
+    }
+
     public List<Contrato> filtrarContratosEnMora() {
         return filtrarContratosEnMora(LocalDate.now());
     }

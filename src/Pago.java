@@ -1,13 +1,17 @@
 import java.time.LocalDate;
+import java.time.YearMonth;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Pago implements Persistible, Notificable {
-    public static final String PENDIENTE = "pendiente";
-    public static final String PAGADO = "pagado";
-
     private static final String ARCHIVO = "pagos.txt";
     private static final int DIAS_AVISO_PREVIO = 7; // RF-16: avisar los pagos que vencen en 7 días o menos
+    public static final String PENDIENTE = "pendiente";
+    public static final String PAGADO = "pagado";
+    public static final String PAGADO_CON_MORA = "pagado con mora";
+    // RF-06: interés de mora por cada día de atraso, sobre el canon (0,1 % diario ≈ 3 % al mes).
+    public static final double TASA_MORA_DIARIA = 0.001;
 
     private int numeroContrato; // contrato al que pertenece; 0 mientras no se haya agregado a uno
     private int idPago;
@@ -35,15 +39,16 @@ public class Pago implements Persistible, Notificable {
         if (!(montoPagado >= 0) || Double.isInfinite(montoPagado)) {
             throw new IllegalArgumentException("El monto pagado no puede ser negativo (se recibió: " + montoPagado + ").");
         }
-        if (PAGADO.equals(estadoPago) && fechaPago == null) {
-            throw new IllegalArgumentException("Un pago '" + PAGADO + "' debe tener fecha de pago.");
+        boolean pagado = PAGADO.equals(estadoPago) || PAGADO_CON_MORA.equals(estadoPago); // RF-05 / RF-06
+        if (!pagado && !PENDIENTE.equals(estadoPago)) {
+            throw new IllegalArgumentException("El estado del pago debe ser '" + PENDIENTE + "', '" + PAGADO + "' o '"
+                    + PAGADO_CON_MORA + "' (se recibió: " + estadoPago + ").");
+        }
+        if (pagado && fechaPago == null) {
+            throw new IllegalArgumentException("Un pago '" + estadoPago + "' debe tener fecha de pago.");
         }
         if (PENDIENTE.equals(estadoPago) && fechaPago != null) {
             throw new IllegalArgumentException("Un pago '" + PENDIENTE + "' todavía no tiene fecha de pago.");
-        }
-        if (!PAGADO.equals(estadoPago) && !PENDIENTE.equals(estadoPago)) {
-            throw new IllegalArgumentException("El estado del pago debe ser '" + PENDIENTE + "' o '" + PAGADO
-                    + "' (se recibió: " + estadoPago + ").");
         }
         this.idPago = idPago;
         this.fechaLimite = fechaLimite;
@@ -53,20 +58,72 @@ public class Pago implements Persistible, Notificable {
         this.estadoPago = estadoPago;
     }
 
-    public void registrarPago() {
-        // Pendiente: RF-05
+    /**
+     * RF-05: registra el pago de esta cuota en la fecha dada, por el valor del canon.
+     * Queda asociado a la fecha de pago y al periodo que cubre (periodoCubierto).
+     * Default: solo lo llama ContratoArriendo.registrarPago(), que antes verifica que el contrato esté activo.
+     */
+    void registrarPago(LocalDate fechaPago, double canon) {
+        if (!estaPendiente()) {
+            throw new IllegalStateException("El pago del periodo " + periodoCubierto + " ya fue registrado el "
+                    + this.fechaPago + ".");
+        }
+        if (fechaPago == null) {
+            throw new IllegalArgumentException("La fecha de pago es obligatoria.");
+        }
+        if (!(canon > 0) || Double.isInfinite(canon)) {
+            throw new IllegalArgumentException("El canon debe ser mayor a cero (se recibió: " + canon + ").");
+        }
+        if (!validarPeriodo()) {
+            throw new IllegalStateException("El periodo '" + periodoCubierto + "' no corresponde a la fecha límite "
+                    + fechaLimite + ".");
+        }
+        this.fechaPago = fechaPago;
+        if (verificarFechaLimite()) {
+            // RF-06: pagó tarde → interés según los días de atraso, sumado al valor a pagar.
+            this.mora = new Mora(diasAtraso(), TASA_MORA_DIARIA);
+            this.montoPagado = canon + mora.calcularValor(canon);
+            this.estadoPago = PAGADO_CON_MORA;
+        } else {
+            this.mora = null;
+            this.montoPagado = canon;
+            this.estadoPago = PAGADO;
+        }
     }
 
+    /** RF-05: el periodo cubierto ("2026-11") debe ser el mes de la fecha límite de la cuota. */
     public boolean validarPeriodo() {
-        throw new UnsupportedOperationException("Pendiente: RF-05");
+        try {
+            return YearMonth.parse(periodoCubierto).equals(YearMonth.from(fechaLimite));
+        } catch (RuntimeException e) {
+            return false;
+        }
     }
 
+    /**
+     * RF-06: valor del interés de mora incluido en el monto pagado (0 si se pagó a tiempo o sigue pendiente).
+     * Si el pago se cargó desde archivo, se recalcula con los datos guardados:
+     * monto = canon * (1 + tasa * días)  →  interés = monto - monto / (1 + tasa * días).
+     */
     public double calcularMora() {
-        throw new UnsupportedOperationException("Pendiente: RF-06");
+        if (!verificarFechaLimite()) {
+            return 0;
+        }
+        if (mora != null) {
+            return mora.valorInteres;
+        }
+        double canon = montoPagado / (1 + TASA_MORA_DIARIA * diasAtraso());
+        return montoPagado - canon;
     }
 
+    /** RF-06: true si el pago se registró después de la fecha límite (es decir, con atraso). */
     public boolean verificarFechaLimite() {
-        throw new UnsupportedOperationException("Pendiente: RF-06");
+        return fechaPago != null && fechaPago.isAfter(fechaLimite);
+    }
+
+    /** RF-06: días entre la fecha límite y la fecha de pago (0 si se pagó a tiempo o sigue pendiente). */
+    public int diasAtraso() {
+        return verificarFechaLimite() ? (int) ChronoUnit.DAYS.between(fechaLimite, fechaPago) : 0;
     }
 
     /** Un pago está pendiente mientras no tenga fecha de pago (no se ha registrado). */
@@ -191,8 +248,10 @@ public class Pago implements Persistible, Notificable {
             this.tasaMora = tasaMora;
         }
 
-        public double calcularValor() {
-            throw new UnsupportedOperationException("Pendiente: RF-06");
+        // RF-06: interés = canon * tasa diaria * días de atraso.
+        public double calcularValor(double canon) {
+            valorInteres = canon * tasaMora * diasAtraso;
+            return valorInteres;
         }
     }
 }
