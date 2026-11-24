@@ -17,6 +17,7 @@ public class ContratoVenta extends Contrato {
         // El valor de venta es el valor base de la propiedad.
         double precio = propiedad.getValorBase();
         validarCuotaInicial(cuotaInicial, precio);
+        validarFinanciamiento(cliente, cuotaInicial, precio);
         this.valorVenta = precio;
         this.cuotaInicial = cuotaInicial;
         this.saldoFinanciado = precio - cuotaInicial;
@@ -29,6 +30,7 @@ public class ContratoVenta extends Contrato {
         super(numeroContrato, propiedad, cliente, fechaInicio, fechaFin, estado);
         validarModo(propiedad);
         validarCuotaInicial(cuotaInicial, valorVenta);
+        validarFinanciamiento(cliente, cuotaInicial, valorVenta);
         if (saldoFinanciado < 0 || saldoFinanciado > valorVenta - cuotaInicial) {
             throw new IllegalArgumentException("El saldo financiado debe estar entre 0 y el valor de venta menos la "
                     + "cuota inicial; se recibió: " + saldoFinanciado + ".");
@@ -99,6 +101,14 @@ public class ContratoVenta extends Contrato {
         if (!Propiedad.MODO_VENTA.equals(propiedad.getModo())) {
             throw new IllegalArgumentException("No se puede crear un contrato de venta: la propiedad '"
                     + propiedad.getDireccion() + "' está en modo " + propiedad.getModo() + ".");
+        }
+    }
+
+    // Un comprador sin financiamiento paga el total: la cuota inicial es el valor de venta y no queda saldo.
+    private static void validarFinanciamiento(Comprador comprador, double cuotaInicial, double precio) {
+        if (comprador != null && !comprador.isRequiereFinanciamiento() && cuotaInicial != precio) {
+            throw new IllegalArgumentException("El comprador " + comprador.getNombre() + " no requiere financiamiento: "
+                    + "la cuota inicial debe ser el valor de venta (" + Utilidades.moneda(precio) + ").");
         }
     }
 

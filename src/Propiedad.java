@@ -116,6 +116,18 @@ public abstract class Propiedad implements Persistible {
      */
     public abstract double calcularDepositoGarantia();
 
+    /**
+     * RF-14: canon mensual sobre el que cada hija calcula su depósito. Solo existe en modo Arriendo: en modo
+     * Venta el valor base es el precio de venta y no hay depósito de garantía.
+     */
+    protected final double canonParaDeposito() {
+        if (!MODO_ARRIENDO.equals(modo)) {
+            throw new IllegalStateException("La propiedad '" + direccion + "' está en " + modo
+                    + ": el depósito de garantía solo aplica a inmuebles en arriendo.");
+        }
+        return valorBase;
+    }
+
     /** RF-11: enlaza al interesado cuando se registra o se restaura desde archivo. */
     void agregarInteresado(Interesado interesado) {
         if (interesado == null) {

@@ -70,10 +70,14 @@ public abstract class Cliente extends Persona {
             String delContrato = nombre + ": el contrato " + contrato.getNumeroContrato() + " ("
                     + contrato.getPropiedad().getDireccion() + ")";
             if (contrato.vencePronto(hoy, DIAS_AVISO_VENCIMIENTO)) {
-                String cuando = contrato.getFechaFin().isBefore(hoy)
+                // Dos tipos distintos (como en RF-17): si el agente atendió el aviso "por vencer", igual debe
+                // enterarse cuando el contrato ya venció y sigue activo.
+                boolean vencido = contrato.getFechaFin().isBefore(hoy);
+                String tipo = vencido ? Notificacion.CLIENTE_CONTRATO_VENCIDO : Notificacion.CLIENTE_CONTRATO_POR_VENCER;
+                String cuando = vencido
                         ? " terminó el " + contrato.getFechaFin() + " y sigue activo."
                         : " termina el " + contrato.getFechaFin() + ".";
-                avisos.add(new Notificacion(Notificacion.CLIENTE_CONTRATO_POR_VENCER, delContrato + cuando,
+                avisos.add(new Notificacion(tipo, delContrato + cuando,
                         contrato.getFechaFin(), idOrigen + ":CONTRATO:" + contrato.getNumeroContrato()));
             }
             if (contrato.tienePagosVencidos(hoy)) {

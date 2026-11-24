@@ -3,6 +3,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Pago implements Persistible, Notificable {
+    public static final String PENDIENTE = "pendiente";
+    public static final String PAGADO = "pagado";
+
     private static final String ARCHIVO = "pagos.txt";
     private static final int DIAS_AVISO_PREVIO = 7; // RF-16: avisar los pagos que vencen en 7 días o menos
 
@@ -18,6 +21,30 @@ public class Pago implements Persistible, Notificable {
     // fechaPago es null mientras el pago siga pendiente
     public Pago(int idPago, LocalDate fechaLimite, LocalDate fechaPago, String periodoCubierto,
                 double montoPagado, String estadoPago) {
+        // RNF-02: datos coherentes antes de crear el pago.
+        if (idPago < 1) {
+            throw new IllegalArgumentException("El id del pago debe ser mayor a cero (se recibió: " + idPago + ").");
+        }
+        if (fechaLimite == null) {
+            throw new IllegalArgumentException("La fecha límite del pago es obligatoria.");
+        }
+        if (periodoCubierto == null || !periodoCubierto.matches("\\d{4}-\\d{2}")) {
+            throw new IllegalArgumentException("El periodo cubierto debe tener el formato AAAA-MM (se recibió: "
+                    + periodoCubierto + ").");
+        }
+        if (!(montoPagado >= 0) || Double.isInfinite(montoPagado)) {
+            throw new IllegalArgumentException("El monto pagado no puede ser negativo (se recibió: " + montoPagado + ").");
+        }
+        if (PAGADO.equals(estadoPago) && fechaPago == null) {
+            throw new IllegalArgumentException("Un pago '" + PAGADO + "' debe tener fecha de pago.");
+        }
+        if (PENDIENTE.equals(estadoPago) && fechaPago != null) {
+            throw new IllegalArgumentException("Un pago '" + PENDIENTE + "' todavía no tiene fecha de pago.");
+        }
+        if (!PAGADO.equals(estadoPago) && !PENDIENTE.equals(estadoPago)) {
+            throw new IllegalArgumentException("El estado del pago debe ser '" + PENDIENTE + "' o '" + PAGADO
+                    + "' (se recibió: " + estadoPago + ").");
+        }
         this.idPago = idPago;
         this.fechaLimite = fechaLimite;
         this.fechaPago = fechaPago;

@@ -41,6 +41,7 @@ public class Main {
                 new Apartamento("Calle 100 # 15 - 20 Apto 301", 60, 1_800_000, "Arriendo", dueno, 2))); // igual, con espacios
         intentar(() -> gestorInmuebles.agregarPropiedad(new Apartamento("Calle 4 #4-4", 40, 1_000_000, "Arriendo",
                 new Propietario("100.200.300", "Otro Carlos", "3000000000"), 1)));        // otro dueño, mismo documento
+        intentar(aptoVenta::calcularDepositoGarantia);                                             // en venta: sin depósito
         intentar(() -> new Apartamento("Calle 1 #1-1", -5, 1_000_000, "Arriendo", dueno, 2));       // área inválida
         intentar(() -> new LocalComercial("Calle 2 #2-2", 30, 1_000_000, "Alquiler", dueno));       // modo inválido
         intentar(() -> new LocalComercial("Calle 3 #3-3", 30, 1_000_000, "Arriendo", null));        // sin propietario
@@ -122,6 +123,9 @@ public class Main {
             System.out.println("OK: " + ana.getNombre() + " tiene " + ana.getContratosVigentes().size()
                     + " contratos vigentes.");
         });
+        // Un comprador sin financiamiento paga el total: no puede quedar saldo financiado
+        intentar(() -> new ContratoVenta(aptoVenta, new Comprador("63777888", "Jorge Contado", "3207778899", false),
+                hoy, hoy.plusMonths(2), 70_000_000));
         // Venta correcta
         ContratoVenta cv = new ContratoVenta(aptoVenta, marta, hoy, hoy.plusMonths(2), 70_000_000);
         intentar(() -> {
@@ -172,6 +176,13 @@ public class Main {
             }
         });
         intentar(() -> c3.agregarPago(new Pago(1, LocalDate.of(2027, 3, 5), null, "2027-03", 0, "pendiente"))); // id repetido
+        // RNF-02: datos incoherentes del pago
+        intentar(() -> c3.agregarPago(new Pago(9, LocalDate.of(2027, 1, 5), null, "2027-01", 0, "pendiente"))); // periodo repetido
+        intentar(() -> c3.agregarPago(new Pago(9, LocalDate.of(2031, 1, 5), null, "2031-01", 0, "pendiente"))); // fuera del contrato
+        intentar(() -> c3.agregarPago(new Pago(9, LocalDate.of(2027, 4, 5), LocalDate.of(2026, 10, 1), "2027-04",
+                4_000_000, "pagado")));                                                       // pagado antes del inicio
+        intentar(() -> new Pago(9, LocalDate.of(2027, 4, 5), null, "2027-04", -1, "pendiente")); // monto negativo
+        intentar(() -> new Pago(9, LocalDate.of(2027, 4, 5), null, "2027-04", 4_000_000, "pagado")); // pagado sin fecha
         intentar(() -> sinCrear.agregarPago(new Pago(1, LocalDate.of(2026, 12, 5), null, "2026-12", 0, "pendiente")));
 
         // ---------- RF-09: contratos con pagos en mora ----------

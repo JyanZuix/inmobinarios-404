@@ -16,7 +16,7 @@ public class Apartamento extends Propiedad {
     // Regla propia de RF-14: el apartamento exige un mes de canon como depósito de garantía.
     @Override
     public double calcularDepositoGarantia() {
-        return valorBase;
+        return canonParaDeposito();
     }
 
     public int getNumHabitaciones() {

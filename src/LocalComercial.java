@@ -14,10 +14,8 @@ public class LocalComercial extends Propiedad {
     // Regla propia de RF-14: el local exige dos meses de canon más el IVA correspondiente.
     @Override
     public double calcularDepositoGarantia() {
-        if (!(valorBase > 0) || Double.isInfinite(valorBase)) {
-            throw new IllegalStateException("El valor base para el depósito de garantía debe ser mayor a cero.");
-        }
-        return 2 * valorBase * (1 + TASA_IVA);
+        // El valor base ya se validó (> 0) al crear la propiedad; canonParaDeposito() exige modo Arriendo.
+        return 2 * canonParaDeposito() * (1 + TASA_IVA);
     }
 
 

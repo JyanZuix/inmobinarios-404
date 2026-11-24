@@ -54,8 +54,7 @@ public class ContratoArriendo extends Contrato {
     /**
      * RF-07: aplica todos los incrementos anuales que se hayan cumplido hasta la fecha dada.
      * Si pasó más de un año sin actualizar, aplica uno por cada aniversario (el incremento es compuesto).
-     * Cuando exista RF-05, registrar un pago llamará a este método con la fecha del pago, para que el canon
-     * siempre esté al día sin que el agente tenga que calcularlo.
+     * generarCuotasHasta() lo llama automáticamente, así el canon siempre está al día sin que el agente lo calcule.
      */
     public void aplicarIncrementoAnual(LocalDate fecha) {
         if (estado == null) {
@@ -99,7 +98,8 @@ public class ContratoArriendo extends Contrato {
 
     /**
      * Agrega un pago al contrato (mínimo de RF-05, necesario para RF-08).
-     * Pendiente de RF-05: registrarPago() y validarPeriodo().
+     * RNF-02: el periodo debe estar dentro del contrato y no repetirse, y la fecha de pago no puede ser
+     * anterior al inicio del contrato. Pendiente de RF-05: registrarPago() y validarPeriodo().
      */
     public void agregarPago(Pago pago) {
         if (estado == null) {
@@ -109,6 +109,21 @@ public class ContratoArriendo extends Contrato {
         if (!ACTIVO.equals(estado)) {
             throw new IllegalStateException("Solo se pueden agregar pagos a un contrato activo (estado actual: "
                     + estado + ").");
+        }
+        if (pago != null) {
+            YearMonth periodo = YearMonth.parse(pago.getPeriodoCubierto());
+            if (periodo.isBefore(YearMonth.from(fechaInicio)) || periodo.isAfter(YearMonth.from(fechaFin))) {
+                throw new IllegalArgumentException("El periodo " + periodo + " está fuera del contrato " + numeroContrato
+                        + " (del " + fechaInicio + " al " + fechaFin + ").");
+            }
+            if (tienePagoDelPeriodo(pago.getPeriodoCubierto())) {
+                throw new IllegalArgumentException("El contrato " + numeroContrato + " ya tiene un pago para el periodo "
+                        + periodo + ".");
+            }
+            if (pago.getFechaPago() != null && pago.getFechaPago().isBefore(fechaInicio)) {
+                throw new IllegalArgumentException("La fecha de pago (" + pago.getFechaPago() + ") no puede ser anterior "
+                        + "al inicio del contrato (" + fechaInicio + ").");
+            }
         }
         incorporarPago(pago);
     }
@@ -142,11 +157,16 @@ public class ContratoArriendo extends Contrato {
      * RF-16: crea las cuotas mensuales pendientes que falten hasta la fecha dada. La cuota k vence el mismo
      * día del inicio, k meses después (contrato que empieza el 21 → cuotas el 21 de cada mes), mientras sea
      * antes del fin del contrato. Si ya existe un pago para ese periodo (registrado o pendiente), no se repite.
+     * RF-07: antes de crear las cuotas aplica los incrementos anuales cumplidos hasta esa fecha, así el canon
+     * queda al día sin que el agente lo pida (el sistema llama a este método al revisar mora y avisos).
      */
     @Override
     public void generarCuotasHasta(LocalDate fecha) {
         if (!ACTIVO.equals(estado)) {
             return; // un contrato sin crear o finalizado no genera cuotas nuevas
+        }
+        if (!fecha.isBefore(fechaInicio)) {
+            aplicarIncrementoAnual(fecha);
         }
         for (int k = 0; ; k++) {
             LocalDate limite = fechaInicio.plusMonths(k); // desde el inicio (no encadenado) para no correr el día
@@ -155,7 +175,7 @@ public class ContratoArriendo extends Contrato {
             }
             String periodo = YearMonth.from(limite).toString(); // "2026-11"
             if (!tienePagoDelPeriodo(periodo)) {
-                incorporarPago(new Pago(siguienteIdPago(), limite, null, periodo, 0, "pendiente"));
+                incorporarPago(new Pago(siguienteIdPago(), limite, null, periodo, 0, Pago.PENDIENTE));
             }
         }
     }

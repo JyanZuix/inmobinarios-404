@@ -13,6 +13,7 @@ public class Notificacion implements Persistible {
     public static final String CONTRATO_VENCIDO = "CONTRATO_VENCIDO";       // RF-17 (activo con fecha de fin pasada)
     public static final String SEGUIMIENTO = "SEGUIMIENTO";                 // RF-18 y RF-19 (cita de hoy o vencida)
     public static final String CLIENTE_CONTRATO_POR_VENCER = "CLIENTE_CONTRATO_POR_VENCER"; // RF-19
+    public static final String CLIENTE_CONTRATO_VENCIDO = "CLIENTE_CONTRATO_VENCIDO";       // RF-19 (vencido y activo)
     public static final String CLIENTE_PAGOS_EN_MORA = "CLIENTE_PAGOS_EN_MORA";             // RF-19
 
     public static final String ARCHIVO = "notificaciones.txt";
