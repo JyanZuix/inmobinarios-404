@@ -117,17 +117,53 @@ public class GestorInmuebles extends Gestor {
         return Collections.unmodifiableList(inmuebles);
     }
 
-    /** RF-11: valida el inventario antes de enlazar al interesado a todas sus propiedades. */
+    /**
+     * RF-11: registra un interesado en uno o más inmuebles del inventario.
+     * Si ya hay un interesado con el mismo contacto, no se crea otro: se le suman los inmuebles nuevos (por
+     * ejemplo, si la semana siguiente se interesa en otro). Si el nombre no coincide con el registrado, se
+     * rechaza, porque probablemente es un error de digitación. Devuelve el interesado (nuevo o existente).
+     */
     public Interesado registrarInteresado(String nombre, String contacto, List<Propiedad> propiedades) {
-        Interesado interesado = new Interesado(nombre, contacto, propiedades);
-        for (Propiedad propiedad : interesado.getInmuebles()) {
+        Interesado candidato = new Interesado(nombre, contacto, propiedades); // valida nombre, contacto e inmuebles
+        for (Propiedad propiedad : candidato.getInmuebles()) {
             if (!inmuebles.contains(propiedad)) {
                 throw new IllegalArgumentException("La propiedad '" + propiedad.getDireccion()
                         + "' no está registrada en el inventario.");
             }
         }
-        enlazarInteresado(interesado);
-        return interesado;
+        Interesado existente = buscarInteresadoPorContacto(candidato.getContacto());
+        if (existente == null) {
+            enlazarInteresado(candidato);
+            return candidato;
+        }
+        if (!existente.getNombre().equalsIgnoreCase(candidato.getNombre())) {
+            throw new IllegalArgumentException("El contacto " + candidato.getContacto() + " ya pertenece al interesado "
+                    + existente.getNombre() + "; no se puede registrar con el nombre " + candidato.getNombre() + ".");
+        }
+        List<Propiedad> nuevas = new ArrayList<>();
+        for (Propiedad propiedad : candidato.getInmuebles()) {
+            if (!existente.getInmuebles().contains(propiedad)) {
+                nuevas.add(propiedad);
+            }
+        }
+        if (nuevas.isEmpty()) {
+            throw new IllegalArgumentException(existente.getNombre() + " ya está interesado en esos inmuebles.");
+        }
+        for (Propiedad propiedad : nuevas) {
+            existente.agregarInmueble(propiedad);
+            propiedad.agregarInteresado(existente);
+        }
+        return existente;
+    }
+
+    // Devuelve el interesado con ese contacto (escrito de cualquier forma, ver Utilidades.mismoContacto) o null.
+    private Interesado buscarInteresadoPorContacto(String contacto) {
+        for (Interesado interesado : getInteresados()) {
+            if (Utilidades.mismoContacto(interesado.getContacto(), contacto)) {
+                return interesado;
+            }
+        }
+        return null;
     }
 
     private void enlazarInteresado(Interesado interesado) {

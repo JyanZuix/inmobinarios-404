@@ -1,4 +1,6 @@
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
@@ -25,11 +27,25 @@ public class Interesado extends Persona {
             throw new IllegalArgumentException("No se puede repetir un inmueble para el mismo interesado.");
         }
         this.id = id;
-        this.inmuebles = List.copyOf(inmuebles);
+        this.inmuebles = new ArrayList<>(inmuebles);
     }
 
     public List<Propiedad> getInmuebles() {
-        return inmuebles;
+        return Collections.unmodifiableList(inmuebles);
+    }
+
+    /**
+     * RF-11: suma un inmueble más a este interesado (por ejemplo, si después se interesa en otro).
+     * Default: solo lo llama GestorInmuebles.registrarInteresado(), que también enlaza la propiedad.
+     */
+    void agregarInmueble(Propiedad propiedad) {
+        if (propiedad == null) {
+            throw new IllegalArgumentException("No se puede agregar un inmueble nulo al interesado.");
+        }
+        if (inmuebles.contains(propiedad)) {
+            throw new IllegalArgumentException(nombre + " ya está interesado en '" + propiedad.getDireccion() + "'.");
+        }
+        inmuebles.add(propiedad);
     }
 
     /** RF-18: avisa cada cita de seguimiento que es hoy o ya pasó. */

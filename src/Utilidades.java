@@ -61,6 +61,14 @@ final class Utilidades {
                 + "dígitos o un correo (por ejemplo nombre@correo.com).");
     }
 
+    /**
+     * RF-11: true si dos contactos son el mismo aunque estén escritos distinto: sin importar mayúsculas, espacios,
+     * guiones, paréntesis ni el prefijo +57 ("312 555 0000" = "3125550000" = "+57 312-555-0000").
+     */
+    static boolean mismoContacto(String a, String b) {
+        return a != null && b != null && claveContacto(a).equals(claveContacto(b));
+    }
+
     /** Muestra un monto como lo leería una persona: 30000000.0 → "$30.000.000". */
     static String moneda(double valor) {
         DecimalFormatSymbols simbolos = new DecimalFormatSymbols(new Locale("es", "CO"));
@@ -77,6 +85,11 @@ final class Utilidades {
     }
 
     // ---------- Auxiliares privados ----------
+
+    private static String claveContacto(String contacto) {
+        String limpio = contacto.trim().toLowerCase().replaceAll("[\\s()-]", "");
+        return limpio.startsWith("+57") ? limpio.substring(3) : limpio;
+    }
 
     private static boolean esCorreo(String texto) {
         return texto.matches("[^@\\s]+@[^@\\s]+\\.[^@\\s]+");

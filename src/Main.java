@@ -205,6 +205,16 @@ public class Main {
         intentar(() -> gestorInmuebles.registrarInteresado("Sin contacto", "", List.of(apto)));
         intentar(() -> gestorInmuebles.registrarInteresado("Fuera del inventario", "3125550002",
                 List.of(apto, noRegistrado)));
+        // Sofía vuelve días después interesada en otro inmueble: con el mismo contacto (escrito distinto) no se
+        // crea otra Sofía, se le suma el inmueble.
+        intentar(() -> {
+            Interesado otraVez = gestorInmuebles.registrarInteresado("sofía ruiz", "312 555 0000", List.of(apto));
+            System.out.println("¿Es la misma Sofía? " + (otraVez == sofia) + " | ahora está interesada en "
+                    + sofia.getInmuebles().size() + " inmuebles | interesados registrados: "
+                    + gestorInmuebles.getInteresados().size());
+        });
+        intentar(() -> gestorInmuebles.registrarInteresado("Otra Persona", "3125550000", List.of(local))); // mismo contacto, otro nombre
+        intentar(() -> gestorInmuebles.registrarInteresado("Sofía Ruiz", "3125550000", List.of(apto)));    // ya interesada ahí
 
         // ---------- RF-12: fechas de seguimiento ----------
         titulo("RF-12: fechas de seguimiento");
