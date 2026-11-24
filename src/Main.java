@@ -244,6 +244,21 @@ public class Main {
             System.out.println("¿Contrato " + c3.getNumeroContrato() + " vence pronto? " + c3.vencePronto(otraRevision, 30));
         });
 
+        // ---------- RF-15: consultar contratos próximos a vencer ----------
+        titulo("RF-15: contratos que vencen en los próximos 30 días");
+        intentar(() -> {
+            // Misma regla que RF-17, pero como consulta a demanda: no crea avisos.
+            for (LocalDate fecha : new LocalDate[]{hoy, otraRevision}) {
+                List<Contrato> porVencer = gestorContratos.listarContratosPorVencer(fecha, 30);
+                System.out.println("Al " + fecha + ": " + porVencer.size() + " contrato(s)");
+                for (Contrato contrato : porVencer) {
+                    System.out.println("  N° " + contrato.getNumeroContrato() + " | " + contrato.getPropiedad().getDireccion()
+                            + " | fin " + contrato.getFechaFin());
+                }
+            }
+        });
+        intentar(() -> gestorContratos.listarContratosPorVencer(hoy, -1)); // días negativos
+
         // ---------- RF-18: avisos de seguimientos de interesados ----------
         titulo("RF-18: seguimientos de interesados");
         intentar(() -> {

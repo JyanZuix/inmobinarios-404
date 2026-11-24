@@ -75,28 +75,31 @@ public class GestorContratos extends Gestor {
         generarCuotasHasta(hoy);
     }
 
-        /**
-     * RF-15: lista los contratos activos cuya fecha de fin vence dentro de los próximos 'dias'
-     * (o ya vencieron y siguen activos).
-     */
+    /** RF-15 con la fecha de hoy (atajo para el uso real del sistema). */
     public List<Contrato> listarContratosPorVencer(int dias) {
+        return listarContratosPorVencer(LocalDate.now(), dias);
+    }
+
+    /**
+     * RF-15: contratos activos cuya fecha de fin cae dentro de los próximos 'dias' días contados desde 'hoy',
+     * o que ya vencieron y siguen activos (mismo criterio que RF-17, por eso reutiliza Contrato.vencePronto()).
+     * Recibe la fecha de referencia para poder demostrarlo y probarlo con fechas fijas (igual que RF-07 y RF-16).
+     */
+    public List<Contrato> listarContratosPorVencer(LocalDate hoy, int dias) {
+        if (hoy == null) {
+            throw new IllegalArgumentException("La fecha de consulta es obligatoria.");
+        }
         if (dias < 0) {
             throw new IllegalArgumentException("El número de días no puede ser negativo (se recibió: " + dias + ").");
         }
-        LocalDate hoy = LocalDate.now();
-        LocalDate fechaLimite = hoy.plusDays(dias);
-
         List<Contrato> porVencer = new ArrayList<>();
         for (Contrato contrato : contratos) {
-            boolean estaActivo = !"finalizado".equalsIgnoreCase(contrato.getEstado());
-            LocalDate fechaFin = contrato.getFechaFin();
-            if (estaActivo && fechaFin != null && !fechaFin.isAfter(fechaLimite)) {
+            if (contrato.vencePronto(hoy, dias)) {
                 porVencer.add(contrato);
             }
         }
         return porVencer;
     }
-
 
     public List<Contrato> getContratos() {
         return Collections.unmodifiableList(contratos);
