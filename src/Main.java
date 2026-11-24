@@ -78,6 +78,11 @@ public class Main {
         intentar(() -> new Arrendatario("80123456", "Contacto malo", "asdf"));    // contacto que no es teléfono ni correo
         System.out.println("Búsqueda con puntos: " + gestorClientes.buscarArrendatario("52.111.222"));
 
+        // ---------- RF-13: inmuebles disponibles por modalidad ----------
+        titulo("RF-13: inmuebles disponibles por modalidad");
+        imprimirDisponibles(gestorInmuebles);
+        intentar(() -> gestorInmuebles.listarDisponibles("Alquiler")); // modalidad inválida
+
         // ---------- RF-03: crear contratos ----------
         titulo("RF-03: crear contratos");
         LocalDate hoy = LocalDate.of(2026, 11, 21);
@@ -303,6 +308,8 @@ public class Main {
                     + (apto.getHistorial().contains(c1) && ana.getHistorial().contains(c1)));
             System.out.println("El contrato aparece en mora después de cerrarlo: "
                     + gestorContratos.filtrarContratosEnMora(diaRevision).contains(c1));
+            System.out.println("RF-13 después de liberar el inmueble:");
+            imprimirDisponibles(gestorInmuebles);
         });
         intentar(c1::terminarContrato); // ya finalizado
 
@@ -359,6 +366,17 @@ public class Main {
                     + recargado.listarNotificacionesPendientes().size()
                     + " | la atendida sigue atendida: " + sigueAtendida);
         });
+    }
+
+    // RF-13: imprime los inmuebles disponibles en cada modalidad.
+    private static void imprimirDisponibles(GestorInmuebles gestor) {
+        for (String modalidad : new String[]{Propiedad.MODO_ARRIENDO, Propiedad.MODO_VENTA}) {
+            List<Propiedad> disponibles = gestor.listarDisponibles(modalidad);
+            System.out.println("Disponibles en " + modalidad + ": " + disponibles.size());
+            for (Propiedad propiedad : disponibles) {
+                System.out.println("  " + propiedad);
+            }
+        }
     }
 
     // Imprime los avisos del gestor cuyo origen empieza como se indica ("PAGO:", "CONTRATO:"...).
