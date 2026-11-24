@@ -1,10 +1,13 @@
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Pago implements Persistible, Notificable {
     private static final String ARCHIVO = "pagos.txt";
     private static final int DIAS_AVISO_PREVIO = 7; // RF-16: avisar los pagos que vencen en 7 días o menos
+    public static final String PENDIENTE = "pendiente";
+    public static final String PAGADO = "pagado";
 
     private int numeroContrato; // contrato al que pertenece; 0 mientras no se haya agregado a uno
     private int idPago;
@@ -26,12 +29,38 @@ public class Pago implements Persistible, Notificable {
         this.estadoPago = estadoPago;
     }
 
-    public void registrarPago() {
-        // Pendiente: RF-05
+    /**
+     * RF-05: registra el pago de esta cuota en la fecha dada, por el valor del canon.
+     * Queda asociado a la fecha de pago y al periodo que cubre (periodoCubierto).
+     * Default: solo lo llama ContratoArriendo.registrarPago(), que antes verifica que el contrato esté activo.
+     */
+    void registrarPago(LocalDate fechaPago, double canon) {
+        if (!estaPendiente()) {
+            throw new IllegalStateException("El pago del periodo " + periodoCubierto + " ya fue registrado el "
+                    + this.fechaPago + ".");
+        }
+        if (fechaPago == null) {
+            throw new IllegalArgumentException("La fecha de pago es obligatoria.");
+        }
+        if (!(canon > 0) || Double.isInfinite(canon)) {
+            throw new IllegalArgumentException("El canon debe ser mayor a cero (se recibió: " + canon + ").");
+        }
+        if (!validarPeriodo()) {
+            throw new IllegalStateException("El periodo '" + periodoCubierto + "' no corresponde a la fecha límite "
+                    + fechaLimite + ".");
+        }
+        this.fechaPago = fechaPago;
+        this.montoPagado = canon;
+        this.estadoPago = PAGADO;
     }
 
+    /** RF-05: el periodo cubierto ("2026-11") debe ser el mes de la fecha límite de la cuota. */
     public boolean validarPeriodo() {
-        throw new UnsupportedOperationException("Pendiente: RF-05");
+        try {
+            return YearMonth.parse(periodoCubierto).equals(YearMonth.from(fechaLimite));
+        } catch (RuntimeException e) {
+            return false;
+        }
     }
 
     public double calcularMora() {
