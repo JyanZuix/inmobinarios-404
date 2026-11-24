@@ -40,10 +40,6 @@ public class ContratoVenta extends Contrato {
         this.saldoFinanciado = saldoFinanciado;
     }
 
-    public void registrarPagoUnico(double monto, LocalDate fecha) {
-        // Pendiente
-    }
-
     // Cuota inicial + saldo financiado = valor de venta.
     @Override
     public double calcularMontoFinal() {

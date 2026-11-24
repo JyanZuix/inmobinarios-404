@@ -50,6 +50,16 @@ public class Pago implements Persistible, Notificable {
         if (PENDIENTE.equals(estadoPago) && fechaPago != null) {
             throw new IllegalArgumentException("Un pago '" + PENDIENTE + "' todavía no tiene fecha de pago.");
         }
+        // RF-06: un pago hecho después de la fecha límite siempre lleva su interés de mora, y uno a tiempo no.
+        boolean tardio = fechaPago != null && fechaPago.isAfter(fechaLimite);
+        if (tardio && !PAGADO_CON_MORA.equals(estadoPago)) {
+            throw new IllegalArgumentException("El pago se hizo el " + fechaPago + ", después de la fecha límite ("
+                    + fechaLimite + "): su estado debe ser '" + PAGADO_CON_MORA + "' (use registrarPago para "
+                    + "calcular el interés).");
+        }
+        if (!tardio && PAGADO_CON_MORA.equals(estadoPago)) {
+            throw new IllegalArgumentException("Un pago hecho a tiempo no puede quedar '" + PAGADO_CON_MORA + "'.");
+        }
         this.idPago = idPago;
         this.fechaLimite = fechaLimite;
         this.fechaPago = fechaPago;

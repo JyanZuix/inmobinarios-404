@@ -114,13 +114,13 @@ En un análisis preliminar, el grupo concluyó que los siguientes son los requer
 **RF-05: Registrar el pago mensual**
 - Clases: Pago, ContratoArriendo.
 - Atributos: idPago, fechaPago, periodoCubierto, montoPagado, estadoPago.
-- Métodos: registrarPago(), validarPeriodo().
-- Relaciones: Composición 1 a 0..*; un ContratoArriendo contiene sus objetos Pago y estos no existen sin él. ContratoVenta no tiene pagos periódicos (usa registrarPagoUnico()).
+- Métodos: registrarPago(), validarPeriodo(); `GestorContratos.registrarPago(numeroContrato, periodo, fecha)` y `ContratoArriendo.registrarPago(periodo, fecha)` (decisión 50).
+- Relaciones: Composición 1 a 0..*; un ContratoArriendo contiene sus objetos Pago y estos no existen sin él. ContratoVenta no tiene pagos periódicos (decisión 52).
 
 **RF-06: Calcular automáticamente el interés de mora**
 - Clases: Pago y su clase anidada Mora.
 - Atributos: diasAtraso, tasaMora, valorInteres (en Mora); mora (en Pago).
-- Métodos: calcularMora() y verificarFechaLimite() en Pago; calcularValor() en Mora.
+- Métodos: calcularMora(), verificarFechaLimite() y diasAtraso() en Pago; calcularValor(canon) en Mora (decisión 51).
 - Relaciones: Mora está anidada dentro de Pago, porque una mora no existe sin el pago atrasado que la origina. Pago.calcularMora() delega el cálculo en Mora.calcularValor().
 
 **RF-07: Aplicar el incremento anual del canon**
@@ -288,7 +288,7 @@ En el diagrama aparecen subrayados.
 | `Propiedad.contadorPropiedades` y `Propiedad.getTotalPropiedades()` | Contar cuántas propiedades se han registrado sin necesitar una instancia concreta | Decisión 7 de la sección 7 |
 | `Contrato.contadorContratos` y `Contrato.generarNumeroContrato()` | Asignar a cada contrato un número consecutivo único (`numeroContrato`), sea de arriendo o de venta | Decisión 7 de la sección 7 |
 | `LocalComercial.TASA_IVA = 0.19` | Constante compartida por todos los locales para calcular el depósito de garantía (dos meses de canon más IVA, RF-14) | Reglas propias por tipo (RF-14) |
-| Podría aplicarse: tasa de mora | Si el agente definiera una única tasa para todos sus contratos, `Mora.tasaMora` podría ser una constante estática en lugar de un dato por instancia | Por ahora cada pago lleva su propia tasa |
+| `Pago.TASA_MORA_DIARIA = 0.001` | Tasa de mora única para todos los contratos (0,1 % del canon por cada día de atraso); cada `Mora` la recibe al crearse | RF-06; decisión 51 |
 
 `GestorContratos.filtrarContratosEnMora()` es un método de instancia, no estático, porque trabaja sobre la lista de contratos de cada gestor.
 
@@ -393,6 +393,10 @@ El registro completo de decisiones del equipo se conserva en el Project del curs
 | 46. Un comprador sin financiamiento paga el total | Ignorar `requiereFinanciamiento` | Sin financiamiento no puede quedar saldo financiado | `ContratoVenta` exige cuota inicial = valor de venta cuando `requiereFinanciamiento` es `false` |
 | 47. `guardarTodo()` agrega o reemplaza registro por registro (no vacía los archivos) | Guardar una foto completa vaciando los archivos antes | Vaciar los archivos borra datos si se guarda sin haber cargado o si el guardado falla a la mitad | El menú debe llamar a `cargarTodo()` al arrancar y `guardarTodo()` después de cambiar datos. Los objetos que se quitan se borran del archivo de forma explícita (`quitarPropiedad()`, cuotas al terminar un contrato). `guardar()` valida antes de escribir y `cargar()` informa "registro dañado" si un registro no se puede leer |
 | 48. RF-11: registrar un interesado con un contacto que ya existe le suma los inmuebles nuevos | Rechazarlo; permitir interesados duplicados; un método aparte para sumar inmuebles | La misma persona puede interesarse después en otro inmueble, y duplicarla repetiría sus avisos de seguimiento (RF-18) | `registrarInteresado()` busca el contacto escrito de cualquier forma (`Utilidades.mismoContacto()`: sin espacios, guiones ni `+57`). Si existe y el nombre coincide, le agrega los inmuebles que no tenía (`Interesado.agregarInmueble()`) y devuelve el mismo interesado; si el nombre es otro, o no hay inmuebles nuevos, lo rechaza |
+| 49. RF-04: mensaje propio cuando la propiedad ya está arrendada | Dejar solo el mensaje general de `verificarDisponibilidad()` ("no está disponible") | El criterio de RF-04 pide mostrar el motivo; "arrendada" le dice al agente qué contrato la ocupa y qué hacer | `crearContrato()` revisa primero si la propiedad está arrendada e indica el número del contrato actual y que debe terminarlo (RF-10); los demás estados siguen con el mensaje general |
+| 50. RF-05: se registra el pago de la cuota que ya existe para el periodo | Crear un pago nuevo con los datos que dé el agente | Las cuotas ya las genera el sistema (decisión 25); pagar la cuota existente evita dos calendarios en un mismo contrato | `GestorContratos.registrarPago(numero, periodo, fecha)` busca el contrato (`buscarContrato()`), exige que sea de arriendo y delega en `ContratoArriendo.registrarPago(periodo, fecha)`, que exige contrato activo y fecha no anterior al inicio, crea las cuotas que falten hasta ese periodo (se puede pagar por adelantado), aplica RF-07 y cobra el canon vigente. `Pago.validarPeriodo()` exige que el periodo sea el mes de la fecha límite y no se puede pagar dos veces. Limitación conocida: pagar por adelantado un periodo posterior a un aniversario sube el canon desde ese momento |
+| 51. RF-06: interés diario fijo sobre el canon | Tasa por contrato; interés mensual | Una sola tasa para el agente es más simple y el criterio pide calcularlo "según los días de atraso" | `Pago.TASA_MORA_DIARIA = 0.001` (0,1 % por día). Si se paga después de la fecha límite, `Mora.calcularValor(canon)` = canon × tasa × días de atraso; el monto pagado es canon + interés y el estado queda `pagado con mora`. `Mora` no se guarda en archivo: al recargar, `calcularMora()` recupera el interés a partir del monto y los días |
+| 52. Un pago tardío siempre es `pagado con mora`; se elimina `registrarPagoUnico()` | Aceptar cualquier estado; dejar `registrarPagoUnico()` vacío | `agregarPago()` permitía un pago tardío sin interés, y `calcularMora()` le inventaba uno. Ningún requerimiento pide el pago de una venta y el método vacío no hacía nada sin avisar | El constructor de `Pago` exige `pagado con mora` si la fecha de pago es posterior a la límite, y lo prohíbe si no lo es. `ContratoVenta` ya no tiene `registrarPagoUnico()` (sección 7.1) |
 
 ### 7.1 Cambios pendientes en el diagrama
 
@@ -403,7 +407,8 @@ El diagrama final todavía no refleja lo siguiente (para el equipo de Diseño):
 - `Gestor`: `+ cargarNotificaciones()`, `# esMiNotificacion(n) : boolean` (abstracto). `SistemaInmobiliario`: `+ marcarNotificacionAtendida(n)`.
 - `Notificacion`: `+ clave() : String`, `+ desdeRegistro(r) : Notificacion` (estático) y la constante `CLIENTE_CONTRATO_VENCIDO`.
 - `Contrato`: `+ terminarContrato(fecha)`, `# finalizar(fecha, estadoPropiedad)`, `# alTerminar(fecha)`, `# estadoPropiedadAlTerminar() : String`. `ContratoVenta`: `+ cancelarVenta(fecha)`.
-- `Propiedad`: `# canonParaDeposito() : double`, `~ descontarRegistro()`, `~ eliminarDelArchivo()`, `~ liberarContrato(contrato, nuevoEstado)`; `agregarInteresado()` es `~`. `Propietario`: `~ quitarPropiedad(propiedad)`. `Pago`: constantes `PENDIENTE` y `PAGADO`, `~ eliminarDelArchivo()`.
+- `Propiedad`: `# canonParaDeposito() : double`, `~ descontarRegistro()`, `~ eliminarDelArchivo()`, `~ liberarContrato(contrato, nuevoEstado)`; `agregarInteresado()` es `~`. `Propietario`: `~ quitarPropiedad(propiedad)`. `Pago`: constantes `PENDIENTE`, `PAGADO`, `PAGADO_CON_MORA` y `TASA_MORA_DIARIA`, `~ registrarPago(fechaPago, canon)` (el UML lo tiene sin parámetros), `+ diasAtraso() : int`, `~ eliminarDelArchivo()`; `Mora.calcularValor(canon)`.
+- `ContratoArriendo`: `+ registrarPago(periodo, fecha) : Pago`. `GestorContratos`: `+ buscarContrato(numero) : Contrato`, `+ registrarPago(numero, periodo, fecha) : Pago`. `ContratoVenta`: **quitar** `registrarPagoUnico(monto, fecha)` (decisión 52).
 
 ## 8. Bitácora de uso de IA (Entrega 2)
 

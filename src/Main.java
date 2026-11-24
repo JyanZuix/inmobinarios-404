@@ -117,9 +117,10 @@ public class Main {
         intentar(() -> new ContratoArriendo(local, luis, hoy, hoy.plusDays(20), 0.05));
         // Una propiedad con contrato no se puede quitar del inventario
         intentar(() -> gestorInmuebles.quitarPropiedad(apto.getDireccion()));
-        // Un cliente puede firmar varios contratos: Ana arrienda también apto2
+        // Un cliente puede firmar varios contratos: Ana arrienda también apto2 (sus pagos se usan en RF-05/06/08)
+        ContratoArriendo c2 = new ContratoArriendo(apto2, ana, hoy, hoy.plusYears(1), 0.05);
         intentar(() -> {
-            gestorContratos.agregarContrato(new ContratoArriendo(apto2, ana, hoy, hoy.plusYears(1), 0.05));
+            gestorContratos.agregarContrato(c2);
             System.out.println("OK: " + ana.getNombre() + " tiene " + ana.getContratosVigentes().size()
                     + " contratos vigentes.");
         });
@@ -159,28 +160,42 @@ public class Main {
         intentar(() -> c3.aplicarIncrementoAnual(hoy.minusDays(1)));  // fecha anterior al inicio
         intentar(() -> sinCrear.aplicarIncrementoAnual(hoy.plusYears(1).plusDays(1))); // contrato sin crear
 
+        // ---------- RF-05 y RF-06: registrar el pago mensual y calcular la mora ----------
+        titulo("RF-05 y RF-06: registrar pagos (con mora si se paga tarde)");
+        // Las cuotas de c2 vencen el 21 de cada mes (el contrato empezó el 21).
+        intentar(() -> {
+            Pago aTiempo = gestorContratos.registrarPago(c2.getNumeroContrato(), "2026-12", LocalDate.of(2026, 12, 15));
+            System.out.println("Periodo 2026-12 pagado el " + aTiempo.getFechaPago() + " (límite " + aTiempo.getFechaLimite()
+                    + "): " + aTiempo.getEstadoPago() + ", " + Utilidades.moneda(aTiempo.getMontoPagado())
+                    + ", interés " + Utilidades.moneda(aTiempo.calcularMora()));
+            Pago tarde = gestorContratos.registrarPago(c2.getNumeroContrato(), "2027-01", LocalDate.of(2027, 1, 30));
+            System.out.println("Periodo 2027-01 pagado el " + tarde.getFechaPago() + " (límite " + tarde.getFechaLimite()
+                    + "): " + tarde.getEstadoPago() + ", " + tarde.diasAtraso() + " días de atraso, interés "
+                    + Utilidades.moneda(tarde.calcularMora()) + ", total " + Utilidades.moneda(tarde.getMontoPagado()));
+        });
+        intentar(() -> gestorContratos.registrarPago(c2.getNumeroContrato(), "2026-12", LocalDate.of(2026, 12, 20))); // ya pagado
+        intentar(() -> gestorContratos.registrarPago(cv.getNumeroContrato(), "2026-12", LocalDate.of(2026, 12, 20))); // es una venta
+        intentar(() -> sinCrear.registrarPago("2026-12", LocalDate.of(2026, 12, 20)));                              // no está activo
+
         // ---------- RF-08: historial de pagos ----------
         titulo("RF-08: historial de pagos");
         intentar(() -> {
-            // Se agregan en desorden; listarPagos() los devuelve ordenados por fecha de pago.
-            c3.agregarPago(new Pago(2, LocalDate.of(2027, 1, 5), LocalDate.of(2027, 1, 10), "2027-01",
-                    4_000_000, "pagado"));                                              // pagado con atraso
-            c3.agregarPago(new Pago(3, LocalDate.of(2027, 2, 5), null, "2027-02", 0, "pendiente"));
-            c3.agregarPago(new Pago(1, LocalDate.of(2026, 12, 5), LocalDate.of(2026, 12, 3), "2026-12",
-                    4_000_000, "pagado"));
-            for (Pago p : c3.listarPagos()) {
+            // Ordenados por fecha de pago, incluidos los que tuvieron mora; los pendientes van al final.
+            for (Pago p : c2.listarPagos()) {
                 System.out.println("Pago " + p.getIdPago() + " | periodo " + p.getPeriodoCubierto()
                         + " | límite " + p.getFechaLimite()
                         + " | pagado " + (p.getFechaPago() == null ? "-" : p.getFechaPago())
-                        + " | " + p.getEstadoPago());
+                        + " | " + p.getEstadoPago() + " | interés " + Utilidades.moneda(p.calcularMora()));
             }
         });
-        intentar(() -> c3.agregarPago(new Pago(1, LocalDate.of(2027, 3, 5), null, "2027-03", 0, "pendiente"))); // id repetido
+        intentar(() -> c2.agregarPago(new Pago(1, LocalDate.of(2027, 3, 21), null, "2027-03", 0, "pendiente"))); // id repetido
         // RNF-02: datos incoherentes del pago
-        intentar(() -> c3.agregarPago(new Pago(9, LocalDate.of(2027, 1, 5), null, "2027-01", 0, "pendiente"))); // periodo repetido
-        intentar(() -> c3.agregarPago(new Pago(9, LocalDate.of(2031, 1, 5), null, "2031-01", 0, "pendiente"))); // fuera del contrato
-        intentar(() -> c3.agregarPago(new Pago(9, LocalDate.of(2027, 4, 5), LocalDate.of(2026, 10, 1), "2027-04",
-                4_000_000, "pagado")));                                                       // pagado antes del inicio
+        intentar(() -> c2.agregarPago(new Pago(9, LocalDate.of(2027, 1, 21), null, "2027-01", 0, "pendiente"))); // periodo repetido
+        intentar(() -> c2.agregarPago(new Pago(9, LocalDate.of(2031, 1, 21), null, "2031-01", 0, "pendiente"))); // fuera del contrato
+        intentar(() -> c2.agregarPago(new Pago(9, LocalDate.of(2027, 4, 21), LocalDate.of(2026, 10, 1), "2027-04",
+                1_900_000, "pagado")));                                                       // pagado antes del inicio
+        intentar(() -> new Pago(9, LocalDate.of(2027, 4, 21), LocalDate.of(2027, 4, 30), "2027-04",
+                1_900_000, "pagado"));                                                        // tardío sin mora (RF-06)
         intentar(() -> new Pago(9, LocalDate.of(2027, 4, 5), null, "2027-04", -1, "pendiente")); // monto negativo
         intentar(() -> new Pago(9, LocalDate.of(2027, 4, 5), null, "2027-04", 4_000_000, "pagado")); // pagado sin fecha
         intentar(() -> sinCrear.agregarPago(new Pago(1, LocalDate.of(2026, 12, 5), null, "2026-12", 0, "pendiente")));
