@@ -31,3 +31,6 @@ bin/
 
 ### Datos de persistencia (propios de cada gestor, NO subir al repositorio) ###
 datos/
+
+### Maven (salida de compilación) ###
+target/
