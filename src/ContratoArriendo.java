@@ -54,7 +54,7 @@ public class ContratoArriendo extends Contrato {
     /**
      * RF-07: aplica todos los incrementos anuales que se hayan cumplido hasta la fecha dada.
      * Si pasó más de un año sin actualizar, aplica uno por cada aniversario (el incremento es compuesto).
-     * Cuando exista RF-05, registrar un pago llamará a este método con la fecha del pago, para que el canon
+     * Registrar un pago (RF-05) llama a este método con la fecha del pago, para que el canon
      * siempre esté al día sin que el agente tenga que calcularlo.
      */
     public void aplicarIncrementoAnual(LocalDate fecha) {
@@ -98,9 +98,40 @@ public class ContratoArriendo extends Contrato {
     }
 
     /**
-     * Agrega un pago al contrato (mínimo de RF-05, necesario para RF-08).
-     * Pendiente de RF-05: registrarPago() y validarPeriodo().
+     * RF-05: registra el pago mensual del periodo dado ("2026-11") en la fecha dada.
+     * Solo se puede si el contrato está activo; el pago queda asociado a la fecha y al periodo que cubre.
+     * Antes de cobrar se aplica el incremento anual (RF-07) para que el canon esté al día.
+     * RNF-02: la fecha de pago no puede ser anterior al inicio del contrato.
      */
+    public Pago registrarPago(String periodo, LocalDate fechaPago) {
+        if (!ACTIVO.equals(estado)) {
+            throw new IllegalStateException("Solo se pueden registrar pagos de un contrato activo (estado actual: "
+                    + estado + ").");
+        }
+        if (fechaPago == null || fechaPago.isBefore(fechaInicio)) {
+            throw new IllegalArgumentException("La fecha de pago (" + fechaPago + ") no puede ser anterior al inicio "
+                    + "del contrato (" + fechaInicio + ").");
+        }
+        YearMonth mes;
+        try {
+            mes = YearMonth.parse(periodo);
+        } catch (RuntimeException e) {
+            throw new IllegalArgumentException("El periodo debe tener el formato AAAA-MM (se recibió: '" + periodo + "').");
+        }
+        // Se crean las cuotas que falten hasta ese mes (permite pagar por adelantado).
+        LocalDate hasta = mes.atEndOfMonth().isAfter(fechaPago) ? mes.atEndOfMonth() : fechaPago;
+        generarCuotasHasta(hasta);
+        Pago pago = buscarPagoDelPeriodo(periodo);
+        if (pago == null) {
+            throw new IllegalArgumentException("El contrato " + numeroContrato + " no tiene cuota para el periodo "
+                    + periodo + " (va del " + fechaInicio + " al " + fechaFin + ").");
+        }
+        aplicarIncrementoAnual(fechaPago);
+        pago.registrarPago(fechaPago, canonActual);
+        return pago;
+    }
+
+    /** Agrega un pago ya armado al contrato (lo usa RF-08 para el historial). */
     public void agregarPago(Pago pago) {
         if (estado == null) {
             throw new IllegalStateException("El contrato aún no ha sido creado: regístrelo con GestorContratos.agregarContrato() antes de "
@@ -155,7 +186,7 @@ public class ContratoArriendo extends Contrato {
             }
             String periodo = YearMonth.from(limite).toString(); // "2026-11"
             if (!tienePagoDelPeriodo(periodo)) {
-                incorporarPago(new Pago(siguienteIdPago(), limite, null, periodo, 0, "pendiente"));
+                incorporarPago(new Pago(siguienteIdPago(), limite, null, periodo, 0, Pago.PENDIENTE));
             }
         }
     }
@@ -204,12 +235,16 @@ public class ContratoArriendo extends Contrato {
     }
 
     private boolean tienePagoDelPeriodo(String periodo) {
+        return buscarPagoDelPeriodo(periodo) != null;
+    }
+
+    private Pago buscarPagoDelPeriodo(String periodo) {
         for (Pago pago : pagos) {
             if (pago.getPeriodoCubierto().equals(periodo)) {
-                return true;
+                return pago;
             }
         }
-        return false;
+        return null;
     }
 
     private int siguienteIdPago() {
