@@ -1,0 +1,3 @@
+a550a4b6-b448-40c4-aa8e-9b824707014e|Sofía Martínez|3001112233|Carrera 15 #85-30 Apto 702|Carrera 11 #93-20 Apto 402
+0d08a804-bc1e-4fea-8b9f-0e582d2edbe2|Andrés Vargas|andres.vargas@correo.com|Avenida 68 #24-15 Local 5
+441bf62b-c443-4e06-8acf-adbdb45ca8d4|Daniela López|3145556677|Carrera 11 #93-20 Apto 402

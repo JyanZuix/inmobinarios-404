@@ -1,0 +1,8 @@
+Arrendatario:52111222|52111222|Ana Gómez|ana.gomez@correo.com
+Arrendatario:79333444|79333444|Luis Pérez|3109876543
+Arrendatario:80456789|80456789|Pedro Castillo|3204567890
+Arrendatario:1020304050|1020304050|Valentina Ruiz|valentina.ruiz@correo.com
+Arrendatario:1032456789|1032456789|Camilo Torres|camilo.torres@correo.com
+Comprador:41555666|41555666|Marta Díaz|marta.diaz@correo.com|true
+Comprador:19876543|19876543|Jorge Herrera|3157778899|false
+Comprador:52111222|52111222|Ana Gómez|ana.gomez@correo.com|true

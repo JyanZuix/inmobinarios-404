@@ -29,8 +29,9 @@ bin/
 ### Mac OS ###
 .DS_Store
 
-### Datos de persistencia (propios de cada gestor, NO subir al repositorio) ###
-datos/
+### Datos de persistencia ###
+# datos/ SÍ se sube: contiene los datos de la demo que carga `mvn javafx:run`.
+# Si al probar la app se modifican, se restauran con: git checkout datos/
 
 ### Maven (salida de compilación) ###
 target/

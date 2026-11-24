@@ -1,0 +1,3 @@
+100200300|Carlos Rojas|3001234567
+52987654|Laura Méndez|laura.mendez@correo.com
+900123456|Inversiones Andinas S.A.S.|6017654321

@@ -1,0 +1,11 @@
+SEGUIMIENTO:INTERESADO:a550a4b6-b448-40c4-aa8e-9b824707014e:2026-11-18|SEGUIMIENTO|Seguimiento con Sofía Martínez (3001112233) estaba para el 2026-11-18 (vencido).|2026-11-18|INTERESADO:a550a4b6-b448-40c4-aa8e-9b824707014e|false
+SEGUIMIENTO:INTERESADO:a550a4b6-b448-40c4-aa8e-9b824707014e:2026-11-24|SEGUIMIENTO|Seguimiento con Sofía Martínez (3001112233) es hoy (2026-11-24).|2026-11-24|INTERESADO:a550a4b6-b448-40c4-aa8e-9b824707014e|false
+SEGUIMIENTO:INTERESADO:0d08a804-bc1e-4fea-8b9f-0e582d2edbe2:2026-11-21|SEGUIMIENTO|Seguimiento con Andrés Vargas (andres.vargas@correo.com) estaba para el 2026-11-21 (vencido).|2026-11-21|INTERESADO:0d08a804-bc1e-4fea-8b9f-0e582d2edbe2|true
+SEGUIMIENTO:CLIENTE:Arrendatario:52111222:2026-11-20|SEGUIMIENTO|Seguimiento con Ana Gómez (ana.gomez@correo.com) estaba para el 2026-11-20 (vencido).|2026-11-20|CLIENTE:Arrendatario:52111222|false
+CLIENTE_PAGOS_EN_MORA:CLIENTE:Arrendatario:52111222:CONTRATO:1:2026-10-15|CLIENTE_PAGOS_EN_MORA|Ana Gómez: el contrato 1 (Calle 100 #15-20 Apto 301) tiene pagos en mora desde el 2026-10-15.|2026-10-15|CLIENTE:Arrendatario:52111222:CONTRATO:1|false
+SEGUIMIENTO:CLIENTE:Arrendatario:79333444:2026-11-24|SEGUIMIENTO|Seguimiento con Luis Pérez (3109876543) es hoy (2026-11-24).|2026-11-24|CLIENTE:Arrendatario:79333444|false
+CLIENTE_CONTRATO_POR_VENCER:CLIENTE:Arrendatario:80456789:CONTRATO:3:2026-12-10|CLIENTE_CONTRATO_POR_VENCER|Pedro Castillo: el contrato 3 (Calle 45 #10-05 Apto 101) termina el 2026-12-10.|2026-12-10|CLIENTE:Arrendatario:80456789:CONTRATO:3|false
+PAGO_EN_MORA:PAGO:1:13:2026-10-15|PAGO_EN_MORA|Pago 13 del contrato 1 (periodo 2026-10) en mora desde el 2026-10-15.|2026-10-15|PAGO:1:13|false
+PAGO_EN_MORA:PAGO:1:14:2026-11-15|PAGO_EN_MORA|Pago 14 del contrato 1 (periodo 2026-11) en mora desde el 2026-11-15.|2026-11-15|PAGO:1:14|false
+PAGO_POR_VENCER:PAGO:2:9:2026-11-28|PAGO_POR_VENCER|Pago 9 del contrato 2 (periodo 2026-11) vence el 2026-11-28.|2026-11-28|PAGO:2:9|false
+CONTRATO_POR_VENCER:CONTRATO:3:2026-12-10|CONTRATO_POR_VENCER|Contrato 3 (Calle 45 #10-05 Apto 101, Pedro Castillo) vence el 2026-12-10.|2026-12-10|CONTRATO:3|false
